@@ -8,6 +8,7 @@ const tabs = [
   { label: "Genel Bakış", path: "" },
   { label: "Kanban Board", path: "board" },
   { label: "Görev Listesi", path: "tasks" },
+  { label: "Sprintler", path: "sprints" }, // ← artık SprintsPage'e bağlı
   { label: "Üyeler", path: "members" },
   { label: "Etiketler", path: "labels" },
   { label: "Ayarlar", path: "settings" },
@@ -40,10 +41,8 @@ export default function ProjectLayout() {
 
   return (
     <div className="min-h-screen bg-background">
-      {/* ── Ortak Navbar (logo + bildirim + profil + çıkış) ── */}
       <Navbar />
 
-      {/* ── Proje adı başlığı ── */}
       <div className="border-b bg-background">
         <div className="max-w-6xl mx-auto px-4 h-10 flex items-center gap-2 text-sm text-muted-foreground">
           <span>Projelerim</span>
@@ -52,7 +51,6 @@ export default function ProjectLayout() {
         </div>
       </div>
 
-      {/* ── Tab bar ── */}
       <div className="border-b overflow-x-auto">
         <div className="max-w-6xl mx-auto px-4 flex gap-1 min-w-max">
           {tabs.map((tab) => (

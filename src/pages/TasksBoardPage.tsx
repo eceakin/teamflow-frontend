@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useParams, useNavigate, useLocation } from "react-router-dom";
 import { useTasks, useUpdateTaskStatus } from "@/hooks/useTasks";
+import { useSprints } from "@/hooks/useSprints";
 import { useQuery } from "@tanstack/react-query";
 import { getMembersApi } from "@/lib/api/projects";
 import KanbanBoard from "@/components/tasks/KanbanBoard";
@@ -25,7 +26,6 @@ export default function TasksBoardPage() {
   const [view, setView] = useState<"board" | "list">("board");
   const [createOpen, setCreateOpen] = useState(false);
 
-  // Veri
   const taskFilters = {
     status: filters.status || undefined,
     assignee_id: filters.assignee_id || undefined,
@@ -33,11 +33,16 @@ export default function TasksBoardPage() {
   };
 
   const { data: tasks = [], isLoading } = useTasks(projectId!, taskFilters);
+
   const { data: members = [] } = useQuery({
     queryKey: ["members", projectId],
     queryFn: () => getMembersApi(projectId!).then((r) => r.data.data),
     enabled: !!projectId,
   });
+
+  // Sprint listesi — FilterBar'daki sprint filtresi için
+  const { data: sprints = [] } = useSprints(projectId!);
+  const sprintOptions = sprints.map((s) => ({ id: s.id, name: s.name }));
 
   const { mutate: updateStatus } = useUpdateTaskStatus(projectId!);
 
@@ -55,7 +60,6 @@ export default function TasksBoardPage() {
 
   return (
     <div className="space-y-4">
-      {/* Üst: başlık + yeni görev butonu */}
       <div className="flex items-center justify-between">
         <h2 className="text-lg font-semibold flex items-center gap-2">
           <LayoutGrid className="size-5" />
@@ -71,16 +75,15 @@ export default function TasksBoardPage() {
         </Button>
       </div>
 
-      {/* Filtre + görünüm seçici */}
       <FilterBar
         filters={filters}
         onChange={setFilters}
         members={members}
+        sprints={sprintOptions} // ← artık dolu geliyor
         view={view}
         onViewChange={setView}
       />
 
-      {/* İçerik */}
       {tasks.length === 0 ? (
         <EmptyState
           title="Görev bulunamadı"
@@ -108,7 +111,6 @@ export default function TasksBoardPage() {
         <TaskListView tasks={tasks} onTaskClick={handleTaskClick} />
       )}
 
-      {/* Görev oluşturma modalı */}
       <CreateTaskModal
         open={createOpen}
         onOpenChange={setCreateOpen}

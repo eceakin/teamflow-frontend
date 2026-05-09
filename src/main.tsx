@@ -3,6 +3,7 @@ import RegisterPage from "@/pages/RegisterPage";
 import DashboardPage from "@/pages/DashboardPage";
 import TasksBoardPage from "@/pages/TasksBoardPage";
 import TaskDetailModal from "@/components/tasks/TaskDetailModal";
+import SprintsPage from "@/pages/SprintsPage"; // ← YENİ
 
 import React from "react";
 import ReactDOM from "react-dom/client";
@@ -26,11 +27,8 @@ import ProfileLayout from "@/components/ProfileLayout";
 import ProfilePage from "@/pages/ProfilePage";
 import ChangePasswordPage from "@/pages/ChangePasswordPage";
 
-// ─── App wrapper: background location pattern için gerekli ────
-
 function AppRoutes() {
   const location = useLocation();
-  // Modal açıkken arka planda kalan sayfa
   const backgroundLocation = location.state?.backgroundLocation;
 
   return (
@@ -44,12 +42,10 @@ function AppRoutes() {
 
           <Route path="/projects/:id" element={<ProjectLayout />}>
             <Route index element={<ProjectOverviewPage />} />
-            {/* Board sayfası (Kanban + liste görünümü) */}
             <Route path="board" element={<TasksBoardPage />} />
-            {/* Görev listesi de board sayfasını açar (liste modu varsayılan) */}
             <Route path="tasks" element={<TasksBoardPage />} />
-            {/* Görev detay — doğrudan URL ile açılırsa tam sayfa */}
             <Route path="tasks/:taskId" element={<TaskDetailModal />} />
+            <Route path="sprints" element={<SprintsPage />} /> {/* ← YENİ */}
             <Route path="members" element={<MembersPage />} />
             <Route path="labels" element={<LabelsPage />} />
             <Route path="settings" element={<ProjectSettingsPage />} />
@@ -64,7 +60,6 @@ function AppRoutes() {
         </Route>
       </Routes>
 
-      {/* Background location pattern: modal olarak görev detay */}
       {backgroundLocation && (
         <Routes>
           <Route
