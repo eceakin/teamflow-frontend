@@ -7,12 +7,13 @@
     "dev": "vite",
     "build": "tsc -b && vite build",
     "lint": "eslint .",
-    "preview": "vite preview"
-    ,"test": "vitest",
-"test:ui": "vitest --ui",
-"test:run": "vitest run"
+    "preview": "vite preview",
+    "test": "vitest",
+    "test:ui": "vitest --ui",
+    "test:run": "vitest run"
   },
   "dependencies": {
+    "@dnd-kit/core": "^6.3.1",
     "@fontsource-variable/geist": "^5.2.8",
     "@hookform/resolvers": "^5.2.2",
     "@tanstack/react-query": "^5.100.9",
@@ -21,8 +22,8 @@
     "clsx": "^2.1.1",
     "lucide-react": "^1.14.0",
     "radix-ui": "^1.4.3",
-    "react": "^19.2.5",
-    "react-dom": "^19.2.5",
+    "react": "^19.2.6",
+    "react-dom": "^19.2.6",
     "react-hook-form": "^7.75.0",
     "react-router-dom": "^7.15.0",
     "shadcn": "^4.7.0",
