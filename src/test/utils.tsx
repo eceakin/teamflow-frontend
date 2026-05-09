@@ -1,3 +1,4 @@
+/* eslint-disable react-refresh/only-export-components */
 import { ReactNode } from "react";
 import { render, RenderOptions } from "@testing-library/react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
@@ -33,5 +34,13 @@ const customRender = (ui: React.ReactElement, options?: RenderOptions & { initia
   });
 };
 
-export * from "@testing-library/react";
+export {
+  act,
+  cleanup,
+  fireEvent,
+  screen,
+  waitFor,
+  waitForElementToBeRemoved,
+  within,
+} from "@testing-library/react";
 export { customRender as render };
