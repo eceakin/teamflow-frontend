@@ -1,58 +1,43 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import api from "@/lib/axios";
-import type { ApiResponse } from "@/types";
 import type { Task, TaskStatus } from "@/types/task";
+import {
+  getTasksApi,
+  getTaskApi,
+  createTaskApi,
+  updateTaskApi,
+  updateTaskStatusApi,
+  deleteTaskApi,
+  addAssigneeApi,
+  removeAssigneeApi,
+  addLabelToTaskApi,
+  removeLabelFromTaskApi,
+} from "@/lib/api/tasks";
 
-// ─── API fonksiyonları ────────────────────────────────────────
+// ─── Filtre tipi ──────────────────────────────────────────────
 
-export const getTasksApi = (
-  projectId: string,
-  params?: Record<string, string>,
-) => api.get<ApiResponse<Task[]>>(`/projects/${projectId}/tasks`, { params });
+export interface TaskFilters {
+  status?: TaskStatus;
+  sprint_id?: string;
+  assignee_id?: string;
+}
 
-export const getTaskApi = (taskId: string) =>
-  api.get<ApiResponse<Task>>(`/tasks/${taskId}`);
+// ─── useTasks ────────────────────────────────────────────────
 
-export const createTaskApi = (
-  projectId: string,
-  payload: {
-    title: string;
-    description?: string;
-    status?: TaskStatus;
-    priority?: Task["priority"];
-    due_date?: string;
-    sprint_id?: string;
-  },
-) => api.post<ApiResponse<Task>>(`/projects/${projectId}/tasks`, payload);
-
-export const updateTaskApi = (taskId: string, payload: Partial<Task>) =>
-  api.put<ApiResponse<Task>>(`/tasks/${taskId}`, payload);
-
-export const updateTaskStatusApi = (taskId: string, status: TaskStatus) =>
-  api.patch<ApiResponse<Task>>(`/tasks/${taskId}/status`, { status });
-
-export const deleteTaskApi = (taskId: string) => api.delete(`/tasks/${taskId}`);
-
-// ─── Hooks ───────────────────────────────────────────────────
-
-/** Proje görevlerini getirir. filters opsiyonel. */
-export function useTasks(
-  projectId: string,
-  filters?: { status?: TaskStatus; sprint_id?: string; assignee_id?: string },
-) {
+export function useTasks(projectId: string, filters?: TaskFilters) {
   const params: Record<string, string> = {};
   if (filters?.status) params.status = filters.status;
   if (filters?.sprint_id) params.sprint_id = filters.sprint_id;
   if (filters?.assignee_id) params.assignee_id = filters.assignee_id;
 
   return useQuery({
-    queryKey: ["tasks", projectId, filters],
+    queryKey: ["tasks", projectId, filters ?? {}],
     queryFn: () => getTasksApi(projectId, params).then((r) => r.data.data),
     enabled: !!projectId,
   });
 }
 
-/** Tek görev detayı */
+// ─── useTask ─────────────────────────────────────────────────
+
 export function useTask(taskId: string) {
   return useQuery({
     queryKey: ["task", taskId],
@@ -61,7 +46,8 @@ export function useTask(taskId: string) {
   });
 }
 
-/** Status güncelleme mutation — Kanban sürükle-bırak için */
+// ─── useUpdateTaskStatus (Kanban optimistic) ──────────────────
+
 export function useUpdateTaskStatus(projectId: string) {
   const qc = useQueryClient();
 
@@ -69,24 +55,30 @@ export function useUpdateTaskStatus(projectId: string) {
     mutationFn: ({ taskId, status }: { taskId: string; status: TaskStatus }) =>
       updateTaskStatusApi(taskId, status),
 
-    // Optimistic update
     onMutate: async ({ taskId, status }) => {
       await qc.cancelQueries({ queryKey: ["tasks", projectId] });
-      const previous = qc.getQueryData<Task[]>(["tasks", projectId]);
 
-      qc.setQueryData<Task[]>(
-        ["tasks", projectId],
+      const previousEntries = qc.getQueriesData<Task[]>({
+        queryKey: ["tasks", projectId],
+      });
+
+      qc.setQueriesData<Task[]>(
+        { queryKey: ["tasks", projectId] },
         (old) =>
           old?.map((t) => (t.id === taskId ? { ...t, status } : t)) ?? [],
       );
 
-      return { previous };
+      qc.setQueryData<Task>(["task", taskId], (old) =>
+        old ? { ...old, status } : old,
+      );
+
+      return { previousEntries };
     },
 
     onError: (_err, _vars, context) => {
-      if (context?.previous) {
-        qc.setQueryData(["tasks", projectId], context.previous);
-      }
+      context?.previousEntries.forEach(([key, data]) => {
+        qc.setQueryData(key, data);
+      });
     },
 
     onSettled: () => {
@@ -95,24 +87,105 @@ export function useUpdateTaskStatus(projectId: string) {
   });
 }
 
-/** Görev oluşturma */
+// ─── useCreateTask ────────────────────────────────────────────
+
 export function useCreateTask(projectId: string) {
   const qc = useQueryClient();
+
   return useMutation({
     mutationFn: (payload: Parameters<typeof createTaskApi>[1]) =>
-      createTaskApi(projectId, payload),
+      createTaskApi(projectId, payload).then((r) => r.data.data),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["tasks", projectId] });
     },
   });
 }
 
-/** Görev silme */
+// ─── useUpdateTask ────────────────────────────────────────────
+
+export function useUpdateTask(projectId: string) {
+  const qc = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({
+      taskId,
+      payload,
+    }: {
+      taskId: string;
+      payload: Parameters<typeof updateTaskApi>[1];
+    }) => updateTaskApi(taskId, payload).then((r) => r.data.data),
+
+    onSuccess: (updatedTask) => {
+      qc.setQueryData(["task", updatedTask.id], updatedTask);
+      qc.invalidateQueries({ queryKey: ["tasks", projectId] });
+    },
+  });
+}
+
+// ─── useDeleteTask ────────────────────────────────────────────
+
 export function useDeleteTask(projectId: string) {
   const qc = useQueryClient();
+
   return useMutation({
-    mutationFn: deleteTaskApi,
+    mutationFn: (taskId: string) => deleteTaskApi(taskId),
     onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["tasks", projectId] });
+    },
+  });
+}
+
+// ─── useAddAssignee ───────────────────────────────────────────
+
+export function useAddAssignee(taskId: string, projectId: string) {
+  const qc = useQueryClient();
+
+  return useMutation({
+    mutationFn: (userId: string) => addAssigneeApi(taskId, userId),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["task", taskId] });
+      qc.invalidateQueries({ queryKey: ["tasks", projectId] });
+    },
+  });
+}
+
+// ─── useRemoveAssignee ────────────────────────────────────────
+
+export function useRemoveAssignee(taskId: string, projectId: string) {
+  const qc = useQueryClient();
+
+  return useMutation({
+    mutationFn: (userId: string) => removeAssigneeApi(taskId, userId),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["task", taskId] });
+      qc.invalidateQueries({ queryKey: ["tasks", projectId] });
+    },
+  });
+}
+
+// ─── useAddLabelToTask ────────────────────────────────────────
+
+export function useAddLabelToTask(taskId: string, projectId: string) {
+  const qc = useQueryClient();
+
+  return useMutation({
+    mutationFn: (labelId: string) => addLabelToTaskApi(taskId, labelId),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["task", taskId] });
+      qc.invalidateQueries({ queryKey: ["tasks", projectId] });
+    },
+  });
+}
+
+// ─── useRemoveLabelFromTask ───────────────────────────────────
+
+export function useRemoveLabelFromTask(taskId: string, projectId: string) {
+  const qc = useQueryClient();
+
+  return useMutation({
+    mutationFn: (labelId: string) => removeLabelFromTaskApi(taskId, labelId),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["task", taskId] });
       qc.invalidateQueries({ queryKey: ["tasks", projectId] });
     },
   });

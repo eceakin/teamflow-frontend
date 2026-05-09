@@ -1,10 +1,11 @@
 import { http, HttpResponse } from "msw";
+import { taskHandlers } from "./taskHandlers";
 
 const BASE = "http://localhost:3000/api";
 
-export const handlers = [
+const authHandlers = [
   http.post(`${BASE}/auth/login`, async ({ request }) => {
-    const body = await request.json() as Record<string, string>;
+    const body = (await request.json()) as Record<string, string>;
 
     if (body.email === "test@example.com" && body.password === "123456") {
       return HttpResponse.json({
@@ -27,17 +28,20 @@ export const handlers = [
 
     return HttpResponse.json(
       { success: false, message: "E-posta veya şifre hatalı" },
-      { status: 401 }
+      { status: 401 },
     );
   }),
 
   http.post(`${BASE}/auth/register`, async ({ request }) => {
-    const body = await request.json() as Record<string, string>;
+    const body = (await request.json()) as Record<string, string>;
 
     if (body.email === "existing@example.com") {
       return HttpResponse.json(
-        { success: false, message: "Bu e-posta veya kullanıcı adı zaten kullanılıyor" },
-        { status: 409 }
+        {
+          success: false,
+          message: "Bu e-posta veya kullanıcı adı zaten kullanılıyor",
+        },
+        { status: 409 },
       );
     }
 
@@ -58,12 +62,12 @@ export const handlers = [
           refreshToken: "mock-refresh-token",
         },
       },
-      { status: 201 }
+      { status: 201 },
     );
   }),
 
   http.post(`${BASE}/auth/refresh`, async ({ request }) => {
-    const body = await request.json() as Record<string, string>;
+    const body = (await request.json()) as Record<string, string>;
 
     if (body.refreshToken === "mock-refresh-token") {
       return HttpResponse.json({
@@ -75,12 +79,12 @@ export const handlers = [
 
     return HttpResponse.json(
       { success: false, message: "Geçersiz refresh token" },
-      { status: 401 }
+      { status: 401 },
     );
   }),
 
   http.post(`${BASE}/auth/logout`, () =>
-    HttpResponse.json({ success: true, message: "Çıkış başarılı", data: null })
+    HttpResponse.json({ success: true, message: "Çıkış başarılı", data: null }),
   ),
 
   http.get(`${BASE}/auth/me`, () =>
@@ -95,7 +99,7 @@ export const handlers = [
         avatar_url: null,
         created_at: "2024-01-01T00:00:00Z",
       },
-    })
+    }),
   ),
 
   http.get(`${BASE}/projects/:id/members`, ({ params }) => {
@@ -150,6 +154,13 @@ export const handlers = [
       });
     }
 
-    return HttpResponse.json({ success: true, message: "İşlem başarılı", data: [] });
+    return HttpResponse.json({
+      success: true,
+      message: "İşlem başarılı",
+      data: [],
+    });
   }),
 ];
+
+// taskHandlers artık auth handler'larla birleştiriliyor
+export const handlers = [...authHandlers, ...taskHandlers];

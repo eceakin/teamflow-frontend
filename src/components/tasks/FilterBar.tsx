@@ -1,6 +1,12 @@
 import { type TaskStatus } from "@/types/task";
 import type { Member } from "@/types";
 
+// Sprint tipi — G3'ten gelecek useSprint hook'una kadar minimal tutuldu
+export interface SprintOption {
+  id: string;
+  name: string;
+}
+
 export interface KanbanFilters {
   status: TaskStatus | "";
   assignee_id: string;
@@ -11,6 +17,11 @@ interface FilterBarProps {
   filters: KanbanFilters;
   onChange: (filters: KanbanFilters) => void;
   members?: Member[];
+  /**
+   * Sprint listesi — G3'ten gelecek useSprint hook'u bağlandığında doldurulur.
+   * Boş bırakılırsa sprint filtresi gizlenir.
+   */
+  sprints?: SprintOption[];
   /** Görünüm seçimi: board veya list */
   view: "board" | "list";
   onViewChange: (v: "board" | "list") => void;
@@ -20,11 +31,17 @@ export default function FilterBar({
   filters,
   onChange,
   members = [],
+  sprints = [],
   view,
   onViewChange,
 }: FilterBarProps) {
   const set = (patch: Partial<KanbanFilters>) =>
     onChange({ ...filters, ...patch });
+
+  const hasActiveFilter =
+    filters.status !== "" ||
+    filters.assignee_id !== "" ||
+    filters.sprint_id !== "";
 
   return (
     <div className="flex flex-wrap items-center gap-2 pb-4">
@@ -39,6 +56,22 @@ export default function FilterBar({
         <option value="in_progress">Devam Ediyor</option>
         <option value="done">Tamamlandı</option>
       </select>
+
+      {/* Sprint filtresi — G3 useSprint hook'u bağlandığında sprints prop'u doldurulur */}
+      {sprints.length > 0 && (
+        <select
+          value={filters.sprint_id}
+          onChange={(e) => set({ sprint_id: e.target.value })}
+          className="h-8 rounded-lg border border-input bg-transparent px-2.5 text-sm text-foreground outline-none focus-visible:border-ring focus-visible:ring-2 focus-visible:ring-ring/50"
+        >
+          <option value="">Tüm Sprintler</option>
+          {sprints.map((s) => (
+            <option key={s.id} value={s.id}>
+              {s.name}
+            </option>
+          ))}
+        </select>
+      )}
 
       {/* Atanan filtresi */}
       {members.length > 0 && (
@@ -56,8 +89,8 @@ export default function FilterBar({
         </select>
       )}
 
-      {/* Sıfırla */}
-      {(filters.status || filters.assignee_id || filters.sprint_id) && (
+      {/* Filtreleri sıfırla */}
+      {hasActiveFilter && (
         <button
           onClick={() =>
             onChange({ status: "", assignee_id: "", sprint_id: "" })
@@ -79,7 +112,6 @@ export default function FilterBar({
               : "text-muted-foreground hover:text-foreground"
           }`}
         >
-          {/* Board icon */}
           <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor">
             <rect x="1" y="1" width="4" height="14" rx="1" />
             <rect x="6" y="1" width="4" height="10" rx="1" />
@@ -95,7 +127,6 @@ export default function FilterBar({
               : "text-muted-foreground hover:text-foreground"
           }`}
         >
-          {/* List icon */}
           <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor">
             <rect x="1" y="2" width="14" height="2" rx="1" />
             <rect x="1" y="7" width="14" height="2" rx="1" />
