@@ -1,7 +1,8 @@
-import { NavLink, Outlet, useParams, useNavigate } from "react-router-dom";
+import { NavLink, Outlet, useParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { getProjectApi } from "@/lib/api/projects";
 import { cn } from "@/lib/utils";
+import Navbar from "@/components/shared/Navbar";
 
 const tabs = [
   { label: "Genel Bakış", path: "" },
@@ -14,7 +15,6 @@ const tabs = [
 
 export default function ProjectLayout() {
   const { id } = useParams<{ id: string }>();
-  const navigate = useNavigate();
 
   const { data: project, isLoading } = useQuery({
     queryKey: ["project", id],
@@ -40,20 +40,19 @@ export default function ProjectLayout() {
 
   return (
     <div className="min-h-screen bg-background">
-      <header className="border-b">
-        <div className="max-w-6xl mx-auto px-4 h-16 flex items-center gap-4">
-          <button
-            onClick={() => navigate("/dashboard")}
-            className="text-sm text-muted-foreground hover:text-foreground transition-colors"
-          >
-            ← Projelerim
-          </button>
-          <span className="text-muted-foreground">/</span>
-          <span className="font-semibold">{project.title}</span>
-        </div>
-      </header>
+      {/* ── Ortak Navbar (logo + bildirim + profil + çıkış) ── */}
+      <Navbar />
 
-      {/* Tab bar — scroll edilebilir (mobil uyumu) */}
+      {/* ── Proje adı başlığı ── */}
+      <div className="border-b bg-background">
+        <div className="max-w-6xl mx-auto px-4 h-10 flex items-center gap-2 text-sm text-muted-foreground">
+          <span>Projelerim</span>
+          <span>/</span>
+          <span className="font-semibold text-foreground">{project.title}</span>
+        </div>
+      </div>
+
+      {/* ── Tab bar ── */}
       <div className="border-b overflow-x-auto">
         <div className="max-w-6xl mx-auto px-4 flex gap-1 min-w-max">
           {tabs.map((tab) => (

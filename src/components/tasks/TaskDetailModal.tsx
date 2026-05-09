@@ -29,6 +29,8 @@ import { usePermission } from "@/hooks/usePermission";
 import AssigneeSection from "@/components/tasks/AssigneeSection";
 import LabelSection from "@/components/tasks/LabelSection";
 import CommentSection from "@/components/tasks/CommentSection";
+import AttachmentList from "@/components/tasks/AttachmentList";
+import FileUpload from "@/components/tasks/FileUpload";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -267,7 +269,7 @@ function TaskDetailContent({
 
       {/* ── Ana içerik: iki kolon ── */}
       <div className="flex gap-6 pt-4 flex-1 overflow-hidden">
-        {/* Sol: açıklama + meta + yorumlar */}
+        {/* Sol: açıklama + meta + dosyalar + yorumlar */}
         <div className="flex-1 min-w-0 overflow-y-auto space-y-5 pr-1">
           {/* Açıklama */}
           <div className="space-y-1.5">
@@ -372,7 +374,25 @@ function TaskDetailContent({
             Oluşturuldu: {new Date(task.created_at).toLocaleString("tr-TR")}
           </p>
 
-          {/* Yorumlar — sadece kaydetme modunda göster */}
+          {/* Dosyalar — sadece görüntüleme modunda */}
+          {!editing && (
+            <div className="border-t pt-5 space-y-4">
+              {/* Mevcut dosyalar */}
+              <AttachmentList taskId={task.id} canEdit={canEdit()} />
+
+              {/* Yükleme alanı — sadece edit yetkisi varsa */}
+              {canEdit() && (
+                <div className="space-y-1.5">
+                  <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
+                    Dosya Yükle
+                  </p>
+                  <FileUpload taskId={task.id} />
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Yorumlar — sadece görüntüleme modunda */}
           {!editing && (
             <div className="border-t pt-5">
               <CommentSection taskId={task.id} />

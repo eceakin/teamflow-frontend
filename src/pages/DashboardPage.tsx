@@ -1,19 +1,21 @@
 import { useState } from "react";
 import { useForm } from "react-hook-form";
-import { Link } from "react-router-dom";
-
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { getProjectsApi, createProjectApi } from "@/lib/api/projects";
-import { logoutApi } from "@/lib/api/auth";
-import { useAuthStore } from "@/store/authStore";
 import type { Project } from "@/types";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+  CardDescription,
+} from "@/components/ui/card";
 import {
   Dialog,
   DialogContent,
@@ -21,6 +23,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
+import Navbar from "@/components/shared/Navbar";
 
 const schema = z.object({
   title: z
@@ -40,7 +43,6 @@ export default function DashboardPage() {
   const [open, setOpen] = useState(false);
   const navigate = useNavigate();
   const qc = useQueryClient();
-  const { user, refreshToken, logout } = useAuthStore();
 
   const { data, isLoading } = useQuery({
     queryKey: ["projects"],
@@ -63,14 +65,6 @@ export default function DashboardPage() {
     },
   });
 
-  const { mutate: handleLogout } = useMutation({
-    mutationFn: () => logoutApi(refreshToken!),
-    onSettled: () => {
-      logout();
-      navigate("/login");
-    },
-  });
-
   const onSubmit = (data: FormData) => {
     createProject({ ...data, description: data.description || undefined });
   };
@@ -89,22 +83,8 @@ export default function DashboardPage() {
 
   return (
     <div className="min-h-screen bg-background">
-      <header className="border-b">
-        <div className="max-w-6xl mx-auto px-4 h-16 flex items-center justify-between">
-          <h1 className="text-xl font-semibold">TeamFlow</h1>
-         <div className="flex items-center gap-4">
-  <Link
-    to="/profile"
-    className="text-sm text-muted-foreground hover:text-foreground transition-colors"
-  >
-    {user?.username}
-  </Link>
-  <Button variant="outline" size="sm" onClick={() => handleLogout()}>
-    Çıkış
-  </Button>
-</div>
-        </div>
-      </header>
+      {/* ── Ortak Navbar (logo + bildirim + profil + çıkış) ── */}
+      <Navbar />
 
       <main className="max-w-6xl mx-auto px-4 py-8">
         <div className="flex items-center justify-between mb-6">
@@ -118,12 +98,21 @@ export default function DashboardPage() {
               <DialogHeader>
                 <DialogTitle>Yeni Proje</DialogTitle>
               </DialogHeader>
-              <form onSubmit={handleSubmit(onSubmit)} className="space-y-4 mt-2">
+              <form
+                onSubmit={handleSubmit(onSubmit)}
+                className="space-y-4 mt-2"
+              >
                 <div className="space-y-1">
                   <Label htmlFor="title">Proje Adı</Label>
-                  <Input id="title" {...register("title")} placeholder="Proje adını girin" />
+                  <Input
+                    id="title"
+                    {...register("title")}
+                    placeholder="Proje adını girin"
+                  />
                   {errors.title && (
-                    <p className="text-sm text-destructive">{errors.title.message}</p>
+                    <p className="text-sm text-destructive">
+                      {errors.title.message}
+                    </p>
                   )}
                 </div>
 
@@ -135,7 +124,9 @@ export default function DashboardPage() {
                     placeholder="Kısa bir açıklama"
                   />
                   {errors.description && (
-                    <p className="text-sm text-destructive">{errors.description.message}</p>
+                    <p className="text-sm text-destructive">
+                      {errors.description.message}
+                    </p>
                   )}
                 </div>
 
@@ -147,6 +138,7 @@ export default function DashboardPage() {
           </Dialog>
         </div>
 
+        {/* Yükleniyor iskelet */}
         {isLoading && (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
             {[...Array(3)].map((_, i) => (
@@ -155,12 +147,14 @@ export default function DashboardPage() {
           </div>
         )}
 
+        {/* Boş durum */}
         {!isLoading && data?.length === 0 && (
           <div className="text-center py-20 text-muted-foreground">
             Henüz projen yok. İlk projeyi oluştur!
           </div>
         )}
 
+        {/* Proje kartları */}
         {!isLoading && data && data.length > 0 && (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
             {data.map((project) => (
@@ -171,7 +165,9 @@ export default function DashboardPage() {
               >
                 <CardHeader className="pb-2">
                   <div className="flex items-start justify-between gap-2">
-                    <CardTitle className="text-base leading-snug">{project.title}</CardTitle>
+                    <CardTitle className="text-base leading-snug">
+                      {project.title}
+                    </CardTitle>
                     <span
                       className={`text-xs px-2 py-0.5 rounded-full whitespace-nowrap font-medium ${statusColor[project.status]}`}
                     >
