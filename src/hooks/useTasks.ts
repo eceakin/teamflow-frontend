@@ -1,5 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import type { Task, TaskStatus } from "@/types/task";
+import type { Task, TaskStatus, Comment } from "@/types/task";
 import {
   getTasksApi,
   getTaskApi,
@@ -11,6 +11,10 @@ import {
   removeAssigneeApi,
   addLabelToTaskApi,
   removeLabelFromTaskApi,
+  getCommentsApi,
+  createCommentApi,
+  updateCommentApi,
+  deleteCommentApi,
 } from "@/lib/api/tasks";
 
 // ─── Filtre tipi ──────────────────────────────────────────────
@@ -190,3 +194,63 @@ export function useRemoveLabelFromTask(taskId: string, projectId: string) {
     },
   });
 }
+
+// ─── useComments ──────────────────────────────────────────────
+
+export function useComments(taskId: string) {
+  return useQuery({
+    queryKey: ["comments", taskId],
+    queryFn: () => getCommentsApi(taskId).then((r) => r.data.data),
+    enabled: !!taskId,
+  });
+}
+
+// ─── useCreateComment ─────────────────────────────────────────
+
+export function useCreateComment(taskId: string) {
+  const qc = useQueryClient();
+
+  return useMutation({
+    mutationFn: (payload: { content: string; parent_id?: string }) =>
+      createCommentApi(taskId, payload).then((r) => r.data.data),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["comments", taskId] });
+    },
+  });
+}
+
+// ─── useUpdateComment ─────────────────────────────────────────
+
+export function useUpdateComment(taskId: string) {
+  const qc = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({
+      commentId,
+      content,
+    }: {
+      commentId: string;
+      content: string;
+    }) => updateCommentApi(commentId, content).then((r) => r.data.data),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["comments", taskId] });
+    },
+  });
+}
+
+// ─── useDeleteComment ─────────────────────────────────────────
+
+export function useDeleteComment(taskId: string) {
+  const qc = useQueryClient();
+
+  return useMutation({
+    mutationFn: (commentId: string) => deleteCommentApi(commentId),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["comments", taskId] });
+    },
+  });
+}
+
+// ─── Re-export type ───────────────────────────────────────────
+// Dışarıdan import kolaylığı için
+export type { Comment };

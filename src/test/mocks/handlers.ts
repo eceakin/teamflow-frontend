@@ -162,5 +162,4 @@ const authHandlers = [
   }),
 ];
 
-// taskHandlers artık auth handler'larla birleştiriliyor
 export const handlers = [...authHandlers, ...taskHandlers];

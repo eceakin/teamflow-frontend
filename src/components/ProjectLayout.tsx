@@ -5,6 +5,8 @@ import { cn } from "@/lib/utils";
 
 const tabs = [
   { label: "Genel Bakış", path: "" },
+  { label: "Kanban Board", path: "board" },
+  { label: "Görev Listesi", path: "tasks" },
   { label: "Üyeler", path: "members" },
   { label: "Etiketler", path: "labels" },
   { label: "Ayarlar", path: "settings" },
@@ -51,19 +53,24 @@ export default function ProjectLayout() {
         </div>
       </header>
 
-      <div className="border-b">
-        <div className="max-w-6xl mx-auto px-4 flex gap-1">
+      {/* Tab bar — scroll edilebilir (mobil uyumu) */}
+      <div className="border-b overflow-x-auto">
+        <div className="max-w-6xl mx-auto px-4 flex gap-1 min-w-max">
           {tabs.map((tab) => (
             <NavLink
               key={tab.path}
-              to={tab.path === "" ? `/projects/${id}` : `/projects/${id}/${tab.path}`}
+              to={
+                tab.path === ""
+                  ? `/projects/${id}`
+                  : `/projects/${id}/${tab.path}`
+              }
               end={tab.path === ""}
               className={({ isActive }) =>
                 cn(
-                  "px-4 py-3 text-sm font-medium border-b-2 transition-colors",
+                  "px-4 py-3 text-sm font-medium border-b-2 transition-colors whitespace-nowrap",
                   isActive
                     ? "border-primary text-primary"
-                    : "border-transparent text-muted-foreground hover:text-foreground"
+                    : "border-transparent text-muted-foreground hover:text-foreground",
                 )
               }
             >

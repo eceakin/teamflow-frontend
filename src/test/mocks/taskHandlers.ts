@@ -1,19 +1,9 @@
-/**
- * Task MSW mock handler'ları
- *
- * Kullanım: mevcut src/test/mocks/handlers.ts dosyasındaki `handlers` dizisine
- * spread ederek ekle:
- *
- *   import { taskHandlers } from "./taskHandlers";
- *   export const handlers = [...authHandlers, ...taskHandlers];
- */
-
 import { http, HttpResponse } from "msw";
 import type { Task, Comment, Attachment } from "@/types/task";
 
 const BASE = "http://localhost:3000/api";
 
-// ─── Sabit seed verisi ────────────────────────────────────────
+// ─── Seed verisi ──────────────────────────────────────────────
 
 const MOCK_TASKS: Task[] = [
   {
@@ -243,6 +233,35 @@ export const taskHandlers = [
     );
   }),
 
+  // PUT /api/comments/:id  ← EKSİKTİ
+  http.put(`${BASE}/comments/:id`, async ({ request, params }) => {
+    const body = (await request.json()) as { content: string };
+    const idx = MOCK_COMMENTS.findIndex((c) => c.id === params.id);
+    if (idx === -1) {
+      return HttpResponse.json(
+        { success: false, message: "Yorum bulunamadı" },
+        { status: 404 },
+      );
+    }
+    MOCK_COMMENTS[idx] = { ...MOCK_COMMENTS[idx], content: body.content };
+    return HttpResponse.json({
+      success: true,
+      message: "Yorum güncellendi",
+      data: MOCK_COMMENTS[idx],
+    });
+  }),
+
+  // DELETE /api/comments/:id  ← EKSİKTİ
+  http.delete(`${BASE}/comments/:id`, ({ params }) => {
+    const idx = MOCK_COMMENTS.findIndex((c) => c.id === params.id);
+    if (idx !== -1) MOCK_COMMENTS.splice(idx, 1);
+    return HttpResponse.json({
+      success: true,
+      message: "Yorum silindi",
+      data: null,
+    });
+  }),
+
   // GET /api/tasks/:id/attachments
   http.get(`${BASE}/tasks/:id/attachments`, ({ params }) => {
     const attachments = MOCK_ATTACHMENTS.filter((a) => a.task_id === params.id);
@@ -287,6 +306,43 @@ export const taskHandlers = [
     return HttpResponse.json({
       success: true,
       message: "Atama kaldırıldı",
+      data: null,
+    });
+  }),
+
+  // POST /api/tasks/:id/labels
+  http.post(`${BASE}/tasks/:id/labels`, async ({ request, params }) => {
+    const body = (await request.json()) as { label_id: string };
+    const task = MOCK_TASKS.find((t) => t.id === params.id);
+    if (!task) {
+      return HttpResponse.json(
+        { success: false, message: "Görev bulunamadı" },
+        { status: 404 },
+      );
+    }
+    const alreadyHas = task.labels.some((l) => l.id === body.label_id);
+    if (!alreadyHas) {
+      task.labels.push({
+        id: body.label_id,
+        name: "Mock Label",
+        color: "#6B7280",
+      });
+    }
+    return HttpResponse.json(
+      { success: true, message: "Etiket eklendi", data: null },
+      { status: 201 },
+    );
+  }),
+
+  // DELETE /api/tasks/:id/labels/:labelId
+  http.delete(`${BASE}/tasks/:id/labels/:labelId`, ({ params }) => {
+    const task = MOCK_TASKS.find((t) => t.id === params.id);
+    if (task) {
+      task.labels = task.labels.filter((l) => l.id !== params.labelId);
+    }
+    return HttpResponse.json({
+      success: true,
+      message: "Etiket kaldırıldı",
       data: null,
     });
   }),

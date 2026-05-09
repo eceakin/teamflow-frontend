@@ -28,6 +28,7 @@ import { useTask, useUpdateTask, useDeleteTask } from "@/hooks/useTasks";
 import { usePermission } from "@/hooks/usePermission";
 import AssigneeSection from "./AssigneeSection";
 import LabelSection from "./LabelSection";
+import CommentSection from "./CommentSection";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -153,22 +154,18 @@ function TaskDetailContent({
           due_date: data.due_date || null,
         },
       },
-      {
-        onSuccess: () => setEditing(false),
-      },
+      { onSuccess: () => setEditing(false) },
     );
   };
 
   const handleDelete = () => {
-    deleteTask(task.id, {
-      onSuccess: () => onClose(),
-    });
+    deleteTask(task.id, { onSuccess: () => onClose() });
   };
 
   return (
-    <div className="flex flex-col h-full">
+    <div className="flex flex-col h-full overflow-hidden">
       {/* ── Üst bar ── */}
-      <div className="flex items-start justify-between gap-4 pb-4 border-b">
+      <div className="flex items-start justify-between gap-4 pb-4 border-b shrink-0">
         <div className="flex-1 min-w-0">
           {editing ? (
             <Input
@@ -188,7 +185,7 @@ function TaskDetailContent({
           )}
         </div>
 
-        {/* Düzenle / Kaydet / İptal */}
+        {/* Eylem butonları */}
         <div className="flex items-center gap-1 shrink-0">
           {canEdit() && !editing && (
             <Button
@@ -221,7 +218,6 @@ function TaskDetailContent({
             </>
           )}
 
-          {/* Sil */}
           {canDelete() && (
             <AlertDialog>
               <AlertDialogTrigger asChild>
@@ -258,7 +254,6 @@ function TaskDetailContent({
             </AlertDialog>
           )}
 
-          {/* Modal kapat */}
           <Button
             variant="ghost"
             size="icon-sm"
@@ -270,9 +265,9 @@ function TaskDetailContent({
         </div>
       </div>
 
-      {/* ── İki kolon layout ── */}
+      {/* ── Ana içerik: iki kolon ── */}
       <div className="flex gap-6 pt-4 flex-1 overflow-hidden">
-        {/* Sol: açıklama + meta */}
+        {/* Sol: açıklama + meta + yorumlar */}
         <div className="flex-1 min-w-0 overflow-y-auto space-y-5 pr-1">
           {/* Açıklama */}
           <div className="space-y-1.5">
@@ -283,7 +278,7 @@ function TaskDetailContent({
               <Textarea
                 {...register("description")}
                 placeholder="Açıklama ekle..."
-                rows={5}
+                rows={4}
               />
             ) : (
               <p className="text-sm text-foreground whitespace-pre-wrap">
@@ -372,13 +367,20 @@ function TaskDetailContent({
             )}
           </div>
 
-          {/* Oluşturulma tarihi */}
+          {/* Oluşturulma */}
           <p className="text-xs text-muted-foreground">
             Oluşturuldu: {new Date(task.created_at).toLocaleString("tr-TR")}
           </p>
+
+          {/* Yorumlar — sadece kaydetme modunda göster */}
+          {!editing && (
+            <div className="border-t pt-5">
+              <CommentSection taskId={task.id} />
+            </div>
+          )}
         </div>
 
-        {/* Sağ: sidebar — atananlar + etiketler */}
+        {/* Sağ: atananlar + etiketler */}
         <div className="w-48 shrink-0 space-y-6 overflow-y-auto">
           <AssigneeSection
             taskId={task.id}
@@ -408,8 +410,6 @@ export default function TaskDetailModal() {
   const navigate = useNavigate();
   const location = useLocation();
 
-  // Background location pattern: state.backgroundLocation varsa modal,
-  // yoksa tam sayfa olarak render edilir.
   const backgroundLocation = location.state?.backgroundLocation;
   const isModal = !!backgroundLocation;
 
@@ -423,7 +423,6 @@ export default function TaskDetailModal() {
     }
   };
 
-  // ── Yükleniyor / Hata ──
   if (isLoading) {
     return isModal ? (
       <ModalShell onClose={handleClose}>
@@ -448,7 +447,6 @@ export default function TaskDetailModal() {
     );
   }
 
-  // ── Modal ──
   if (isModal) {
     return (
       <ModalShell onClose={handleClose}>
@@ -461,7 +459,6 @@ export default function TaskDetailModal() {
     );
   }
 
-  // ── Tam sayfa (URL doğrudan açıldıysa) ──
   return (
     <div className="min-h-screen bg-background">
       <div className="max-w-4xl mx-auto px-4 py-8">
@@ -485,11 +482,9 @@ function ModalShell({
   onClose: () => void;
 }) {
   return (
-    // Backdrop
     <div
       className="fixed inset-0 z-50 flex items-center justify-center bg-black/20 backdrop-blur-sm"
       onClick={(e) => {
-        // Backdrop'a tıklanınca kapat, içeriğe tıklanınca kapatma
         if (e.target === e.currentTarget) onClose();
       }}
     >
