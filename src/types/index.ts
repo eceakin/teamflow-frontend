@@ -59,3 +59,14 @@ export interface Label {
   color: string;
   created_at: string;
 }
+
+export interface Notification {
+  id: string;
+  user_id: string;
+  type: string;
+  message: string;
+  is_read: boolean;
+  entity_type: string | null;
+  entity_id: string | null;
+  created_at: string; 
+}

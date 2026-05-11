@@ -1,5 +1,6 @@
 import { http, HttpResponse } from "msw";
 import { taskHandlers } from "./taskHandlers";
+import { notificationHandlers } from "./notificationsHandlers";
 
 const BASE = "http://localhost:3000/api";
 
@@ -162,4 +163,4 @@ const authHandlers = [
   }),
 ];
 
-export const handlers = [...authHandlers, ...taskHandlers];
+export const handlers = [...authHandlers, ...taskHandlers, ...notificationHandlers ];

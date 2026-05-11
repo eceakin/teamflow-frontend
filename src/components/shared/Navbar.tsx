@@ -1,11 +1,14 @@
 import { Link, useNavigate } from "react-router-dom";
 import { useMutation } from "@tanstack/react-query";
 import { Bell, LogOut, User } from "lucide-react";
+import { useUnreadCount } from "@/hooks/useNotifications";
 import { useAuthStore } from "@/store/authStore";
 import { logoutApi } from "@/lib/api/auth";
 import { Button } from "@/components/ui/button";
 
+
 export default function Navbar() {
+  const unReadCount = useUnreadCount();
   const navigate = useNavigate();
   const user = useAuthStore((s) => s.user);
   const refreshToken = useAuthStore((s) => s.refreshToken);
@@ -41,6 +44,11 @@ export default function Navbar() {
           >
             <Link to="/notifications">
               <Bell className="size-4" />
+              {unReadCount > 0 && (
+                <span className="absolute -top-0.5 -right-0.5 min-w-[16px] h-[16px] rounded-full bg-destructive text-destructive-foreground text-[10px] font-bold flex items-center justify-center px-0.5">
+                  {unReadCount > 99 ? "99+" : unReadCount}
+                </span>
+              )}
             </Link>
           </Button>
 
