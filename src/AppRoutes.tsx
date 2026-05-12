@@ -28,7 +28,9 @@ export default function AppRoutes() {
         <Route path="/register" element={<RegisterPage />} />
 
         <Route element={<ProtectedRoute />}>
+          <Route path="/profile" element={<ProfilePage />} />
           <Route path="/dashboard" element={<DashboardPage />} />
+
           <Route path="/notifications" element={<NotificationsPage />} />
 
           <Route path="/projects/:id" element={<ProjectLayout />}>

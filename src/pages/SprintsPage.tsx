@@ -3,7 +3,6 @@ import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { useQueryClient } from "@tanstack/react-query";
 import {
   useSprints,
   useCreateSprint,
@@ -35,24 +34,14 @@ import {
   AlertDialogAction,
   AlertDialogCancel,
   AlertDialogContent,
-  AlertDialogDescription,
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { LoadingSpinner, EmptyState } from "@/components/shared/feedback";
-import {
-  Plus,
-  Play,
-  Square,
-  Pencil,
-  Check,
-  X,
-  ChevronDown,
-  ChevronRight,
-  Zap,
-} from "lucide-react";
+import { Plus, Pencil, X, ChevronDown, ChevronRight, Zap } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 // ─── Şemalar ─────────────────────────────────────────────────
 
@@ -83,15 +72,24 @@ const sprintSchema = z
 
 type SprintFormData = z.infer<typeof sprintSchema>;
 
-// ─── Yardımcı: durum etiketi ve rengi ────────────────────────
+// ─── Yardımcılar ────────────────────────
 
 const statusConfig: Record<
   Sprint["status"],
-  { label: string; variant: "default" | "secondary" | "outline" }
+  { label: string; className: string }
 > = {
-  planning: { label: "Planlama", variant: "outline" },
-  active: { label: "Aktif", variant: "default" },
-  completed: { label: "Tamamlandı", variant: "secondary" },
+  planning: {
+    label: "Planlama",
+    className: "bg-gray-100 text-gray-600 border-gray-200",
+  },
+  active: {
+    label: "Aktif",
+    className: "bg-blue-600 text-white border-transparent",
+  },
+  completed: {
+    label: "Tamamlandı",
+    className: "bg-green-100 text-green-700 border-green-200",
+  },
 };
 
 function formatDate(dateStr: string | null) {
@@ -99,11 +97,10 @@ function formatDate(dateStr: string | null) {
   return new Date(dateStr).toLocaleDateString("tr-TR", {
     day: "numeric",
     month: "short",
-    year: "numeric",
   });
 }
 
-// ─── Sprint formu (oluştur / düzenle) ────────────────────────
+// ─── Sprint Formu ────────────────────────
 
 interface SprintFormProps {
   defaultValues?: SprintFormData;
@@ -136,57 +133,88 @@ function SprintForm({
 
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-      <div className="space-y-1">
-        <Label htmlFor="sf-name">Sprint Adı *</Label>
+      <div className="space-y-1.5">
+        <Label
+          htmlFor="sf-name"
+          className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground"
+        >
+          Sprint Adı *
+        </Label>
         <Input
           id="sf-name"
           {...register("name")}
           placeholder="örn: Sprint 1"
           autoFocus
+          className="bg-gray-50 focus:bg-white"
         />
         {errors.name && (
-          <p className="text-sm text-destructive">{errors.name.message}</p>
+          <p className="text-xs font-medium text-red-500">
+            {errors.name.message}
+          </p>
         )}
       </div>
 
-      <div className="space-y-1">
-        <Label htmlFor="sf-goal">Hedef</Label>
+      <div className="space-y-1.5">
+        <Label
+          htmlFor="sf-goal"
+          className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground"
+        >
+          Hedef
+        </Label>
         <Input
           id="sf-goal"
           {...register("goal")}
-          placeholder="Bu sprint'te ne başarmak istiyorsunuz?"
+          placeholder="Neyi hedefliyorsunuz?"
+          className="bg-gray-50 focus:bg-white"
         />
-        {errors.goal && (
-          <p className="text-sm text-destructive">{errors.goal.message}</p>
-        )}
       </div>
 
       <div className="grid grid-cols-2 gap-3">
-        <div className="space-y-1">
-          <Label htmlFor="sf-start">Başlangıç</Label>
-          <Input id="sf-start" type="date" {...register("start_date")} />
+        <div className="space-y-1.5">
+          <Label
+            htmlFor="sf-start"
+            className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground"
+          >
+            Başlangıç
+          </Label>
+          <Input
+            id="sf-start"
+            type="date"
+            {...register("start_date")}
+            className="bg-gray-50"
+          />
         </div>
-        <div className="space-y-1">
-          <Label htmlFor="sf-end">Bitiş</Label>
-          <Input id="sf-end" type="date" {...register("end_date")} />
-          {errors.end_date && (
-            <p className="text-sm text-destructive">
-              {errors.end_date.message}
-            </p>
-          )}
+        <div className="space-y-1.5">
+          <Label
+            htmlFor="sf-end"
+            className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground"
+          >
+            Bitiş
+          </Label>
+          <Input
+            id="sf-end"
+            type="date"
+            {...register("end_date")}
+            className="bg-gray-50"
+          />
         </div>
       </div>
 
-      <div className="flex justify-end gap-2 pt-1">
+      <div className="flex justify-end gap-2 pt-2">
         <Button
           type="button"
-          variant="outline"
+          variant="ghost"
           onClick={onCancel}
           disabled={isPending}
+          className="font-semibold"
         >
           İptal
         </Button>
-        <Button type="submit" disabled={isPending}>
+        <Button
+          type="submit"
+          disabled={isPending}
+          className="bg-blue-600 hover:bg-blue-700 text-white font-semibold"
+        >
           {isPending ? "Kaydediliyor..." : submitLabel}
         </Button>
       </div>
@@ -194,27 +222,12 @@ function SprintForm({
   );
 }
 
-// ─── Görev atama satırı ───────────────────────────────────────
+// ─── Sprint Görev Satırı ────────────────────────
 
-interface TaskRowProps {
-  taskId: string;
-  title: string;
-  status: string;
-  sprintId: string;
-  projectId: string;
-  canEdit: boolean;
-}
-
-const statusLabel: Record<string, string> = {
-  todo: "Yapılacak",
-  in_progress: "Devam Ediyor",
-  done: "Tamamlandı",
-};
-
-const statusClass: Record<string, string> = {
-  todo: "bg-slate-100 text-slate-600",
-  in_progress: "bg-blue-100 text-blue-700",
-  done: "bg-green-100 text-green-700",
+const taskStatusClass: Record<string, string> = {
+  todo: "bg-gray-100 text-gray-600",
+  in_progress: "bg-blue-50 text-blue-700",
+  done: "bg-green-50 text-green-700",
 };
 
 function SprintTaskRow({
@@ -228,37 +241,42 @@ function SprintTaskRow({
   const { mutate: removeTask, isPending } = useRemoveTaskFromSprint(projectId);
 
   return (
-    <div className="flex items-center justify-between py-2 px-3 rounded-lg hover:bg-muted/40 group transition-colors">
+    <div className="flex items-center justify-between py-1.5 px-3 bg-white border border-gray-100 mb-0.5 hover:border-blue-300 transition-all group">
       <div className="flex items-center gap-3 min-w-0">
-        <span
-          className={`text-[11px] px-2 py-0.5 rounded-full font-medium shrink-0 ${statusClass[status] ?? "bg-muted text-muted-foreground"}`}
-        >
-          {statusLabel[status] ?? status}
+        <div className="size-4 bg-blue-500 rounded-sm flex items-center justify-center text-[8px] text-white font-bold shrink-0">
+          S
+        </div>
+        <span className="text-sm text-gray-700 truncate font-medium">
+          {title}
         </span>
-        <span className="text-sm truncate">{title}</span>
+        <span className="text-[9px] text-gray-400 font-bold uppercase shrink-0">
+          TF-{taskId.slice(0, 4)}
+        </span>
       </div>
-      {canEdit && (
-        <button
-          onClick={() => removeTask({ sprintId, taskId })}
-          disabled={isPending}
-          className="opacity-0 group-hover:opacity-100 transition-opacity text-muted-foreground hover:text-destructive shrink-0 ml-2"
-          aria-label="Sprint'ten çıkar"
+      <div className="flex items-center gap-3">
+        <Badge
+          className={cn(
+            "text-[9px] font-bold px-1.5 py-0 shadow-none border-none",
+            taskStatusClass[status],
+          )}
         >
-          <X className="size-3.5" />
-        </button>
-      )}
+          {status.toUpperCase().replace("_", " ")}
+        </Badge>
+        {canEdit && (
+          <button
+            onClick={() => removeTask({ sprintId, taskId })}
+            disabled={isPending}
+            className="opacity-0 group-hover:opacity-100 transition-opacity text-gray-400 hover:text-red-600"
+          >
+            <X className="size-3.5" />
+          </button>
+        )}
+      </div>
     </div>
   );
 }
 
-// ─── Backlog görev seçici ──────────────────────────────────────
-
-interface BacklogPickerProps {
-  sprintId: string;
-  projectId: string;
-  currentSprintTaskIds: Set<string>;
-  onClose: () => void;
-}
+// ─── Backlog Görev Seçici ────────────────────────
 
 function BacklogPicker({
   sprintId,
@@ -269,35 +287,36 @@ function BacklogPicker({
   const { data: allTasks = [] } = useTasks(projectId);
   const { mutate: addTask, isPending } = useAddTaskToSprint(projectId);
 
-  // Backlog = sprint_id yok veya farklı bir sprint'te olan görevler
   const backlogTasks = allTasks.filter(
     (t) => !t.sprint_id && !currentSprintTaskIds.has(t.id),
   );
 
   return (
-    <div className="space-y-3">
+    <div className="space-y-1 mt-2">
       {backlogTasks.length === 0 ? (
-        <p className="text-sm text-muted-foreground text-center py-4">
-          Backlog'da görev yok
+        <p className="text-xs text-muted-foreground text-center py-4 bg-gray-50 rounded italic">
+          Backlog'da atanabilir görev kalmadı.
         </p>
       ) : (
-        <div className="max-h-64 overflow-y-auto space-y-1">
+        <div className="max-h-64 overflow-y-auto space-y-1 p-1 bg-gray-50 rounded-md">
           {backlogTasks.map((task) => (
             <div
               key={task.id}
-              className="flex items-center justify-between py-2 px-3 rounded-lg hover:bg-muted/40 transition-colors"
+              className="flex items-center justify-between py-2 px-3 bg-white border rounded shadow-sm"
             >
-              <span className="text-sm truncate flex-1">{task.title}</span>
+              <span className="text-xs font-medium truncate flex-1">
+                {task.title}
+              </span>
               <Button
                 size="sm"
-                variant="outline"
-                className="h-6 px-2 text-xs shrink-0 ml-2"
+                variant="ghost"
+                className="h-6 px-2 text-[10px] font-bold text-blue-600 hover:bg-blue-50"
                 disabled={isPending}
                 onClick={() =>
                   addTask({ sprintId, taskId: task.id }, { onSuccess: onClose })
                 }
               >
-                Ekle
+                EKLE
               </Button>
             </div>
           ))}
@@ -307,13 +326,7 @@ function BacklogPicker({
   );
 }
 
-// ─── Tek sprint kartı ─────────────────────────────────────────
-
-interface SprintCardProps {
-  sprint: Sprint;
-  projectId: string;
-  canEdit: boolean;
-}
+// ─── Sprint Kartı ────────────────────────
 
 function SprintCard({ sprint, projectId, canEdit }: SprintCardProps) {
   const [expanded, setExpanded] = useState(sprint.status === "active");
@@ -328,35 +341,23 @@ function SprintCard({ sprint, projectId, canEdit }: SprintCardProps) {
 
   const { data: allTasks = [] } = useTasks(projectId, { sprint_id: sprint.id });
   const sprintTaskIds = new Set(allTasks.map((t) => t.id));
-
   const cfg = statusConfig[sprint.status];
-
-  const handleUpdate = (data: SprintFormData) => {
-    updateSprint(
-      {
-        sprintId: sprint.id,
-        payload: {
-          name: data.name,
-          goal: data.goal || undefined,
-          start_date: data.start_date || undefined,
-          end_date: data.end_date || undefined,
-        },
-      },
-      { onSuccess: () => setEditing(false) },
-    );
-  };
 
   return (
     <Card
-      className={sprint.status === "active" ? "ring-2 ring-primary/40" : ""}
+      className={cn(
+        "border-kanban-border shadow-jira-card transition-all overflow-hidden",
+        sprint.status === "active"
+          ? "ring-1 ring-blue-500/30 border-blue-200"
+          : "bg-gray-50/50",
+      )}
     >
-      <CardHeader className="pb-3">
-        <div className="flex items-start justify-between gap-3">
-          <div className="flex items-center gap-2 min-w-0 flex-1">
+      <CardHeader className="p-4 bg-white/50">
+        <div className="flex items-center justify-between gap-4">
+          <div className="flex items-center gap-3 min-w-0 flex-1">
             <button
-              onClick={() => setExpanded((v) => !v)}
-              className="shrink-0 text-muted-foreground hover:text-foreground transition-colors"
-              aria-label={expanded ? "Daralt" : "Genişlet"}
+              onClick={() => setExpanded(!expanded)}
+              className="text-gray-400 hover:text-blue-600"
             >
               {expanded ? (
                 <ChevronDown className="size-4" />
@@ -364,123 +365,113 @@ function SprintCard({ sprint, projectId, canEdit }: SprintCardProps) {
                 <ChevronRight className="size-4" />
               )}
             </button>
-            {editing ? (
-              <span className="text-base font-semibold">{sprint.name}</span>
-            ) : (
-              <CardTitle className="text-base">{sprint.name}</CardTitle>
-            )}
-            <Badge variant={cfg.variant} className="shrink-0">
-              {cfg.label}
-            </Badge>
-            <span className="text-xs text-muted-foreground shrink-0">
-              {allTasks.length} görev
-            </span>
-          </div>
-
-          {/* Eylem butonları */}
-          {canEdit && !editing && (
-            <div className="flex items-center gap-1 shrink-0">
-              <Button
-                variant="ghost"
-                size="icon-sm"
-                onClick={() => setEditing(true)}
-                aria-label="Düzenle"
+            <div className="flex items-center gap-2 truncate">
+              <CardTitle className="text-sm font-bold text-gray-800 uppercase tracking-tight">
+                {sprint.name}
+              </CardTitle>
+              <Badge
+                className={cn(
+                  "text-[9px] font-black px-1.5 py-0 shadow-none border",
+                  cfg.className,
+                )}
               >
-                <Pencil className="size-3.5" />
-              </Button>
-
-              {sprint.status === "planning" && (
-                <Button
-                  size="sm"
-                  variant="outline"
-                  className="h-7 gap-1 text-xs"
-                  disabled={isStarting}
-                  onClick={() => startSprint(sprint.id)}
-                >
-                  <Play className="size-3" />
-                  Başlat
-                </Button>
-              )}
-
-              {sprint.status === "active" && (
-                <AlertDialog>
-                  <AlertDialogTrigger asChild>
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      className="h-7 gap-1 text-xs"
-                      disabled={isEnding}
-                    >
-                      <Square className="size-3" />
-                      Bitir
-                    </Button>
-                  </AlertDialogTrigger>
-                  <AlertDialogContent>
-                    <AlertDialogHeader>
-                      <AlertDialogTitle>Sprint bitirilsin mi?</AlertDialogTitle>
-                      <AlertDialogDescription>
-                        Tamamlanmamış görevler backlog'a taşınacak. Bu işlem
-                        geri alınamaz.
-                      </AlertDialogDescription>
-                    </AlertDialogHeader>
-                    <AlertDialogFooter>
-                      <AlertDialogCancel>İptal</AlertDialogCancel>
-                      <AlertDialogAction onClick={() => endSprint(sprint.id)}>
-                        Evet, Bitir
-                      </AlertDialogAction>
-                    </AlertDialogFooter>
-                  </AlertDialogContent>
-                </AlertDialog>
-              )}
+                {cfg.label.toUpperCase()}
+              </Badge>
+              <span className="text-[10px] text-gray-400 font-bold ml-1 shrink-0">
+                {allTasks.length} GÖREV •{" "}
+                {formatDate(sprint.start_date) || "..."} -{" "}
+                {formatDate(sprint.end_date) || "..."}
+              </span>
             </div>
-          )}
-        </div>
+          </div>
 
-        {/* Tarih ve hedef satırı */}
-        {!editing && (
-          <div className="pl-6 space-y-1">
-            {(sprint.start_date || sprint.end_date) && (
-              <p className="text-xs text-muted-foreground">
-                {formatDate(sprint.start_date) ?? "—"} →{" "}
-                {formatDate(sprint.end_date) ?? "—"}
-              </p>
-            )}
-            {sprint.goal && (
-              <p className="text-sm text-muted-foreground italic">
-                "{sprint.goal}"
-              </p>
+          <div className="flex items-center gap-2">
+            {canEdit && !editing && (
+              <>
+                <Button
+                  variant="ghost"
+                  size="icon-sm"
+                  onClick={() => setEditing(true)}
+                  className="h-7 w-7 text-gray-400"
+                >
+                  <Pencil className="size-3.5" />
+                </Button>
+                {sprint.status === "planning" && (
+                  <Button
+                    size="sm"
+                    onClick={() => startSprint(sprint.id)}
+                    disabled={isStarting}
+                    className="h-7 bg-blue-600 hover:bg-blue-700 text-xs font-bold"
+                  >
+                    SPRİNTİ BAŞLAT
+                  </Button>
+                )}
+                {sprint.status === "active" && (
+                  <AlertDialog>
+                    <AlertDialogTrigger asChild>
+                      <Button
+                        size="sm"
+                        disabled={isEnding}
+                        className="h-7 bg-gray-800 hover:bg-gray-900 text-xs font-bold"
+                      >
+                        BITIR
+                      </Button>
+                    </AlertDialogTrigger>
+                    <AlertDialogContent>
+                      <AlertDialogHeader>
+                        <AlertDialogTitle>
+                          Sprint bitirilsin mi?
+                        </AlertDialogTitle>
+                      </AlertDialogHeader>
+                      <AlertDialogFooter>
+                        <AlertDialogCancel>İptal</AlertDialogCancel>
+                        <AlertDialogAction
+                          onClick={() => endSprint(sprint.id)}
+                          className="bg-blue-600"
+                        >
+                          Evet, Bitir
+                        </AlertDialogAction>
+                      </AlertDialogFooter>
+                    </AlertDialogContent>
+                  </AlertDialog>
+                )}
+              </>
             )}
           </div>
+        </div>
+        {sprint.goal && !editing && (
+          <p className="text-xs text-gray-500 mt-2 px-7 italic">
+            "{sprint.goal}"
+          </p>
         )}
       </CardHeader>
 
-      {/* Düzenleme formu */}
-      {editing && (
-        <CardContent className="pt-0 pb-4">
-          <SprintForm
-            defaultValues={{
-              name: sprint.name,
-              goal: sprint.goal ?? "",
-              start_date: sprint.start_date ?? "",
-              end_date: sprint.end_date ?? "",
-            }}
-            onSubmit={handleUpdate}
-            onCancel={() => setEditing(false)}
-            isPending={isUpdating}
-            submitLabel="Kaydet"
-          />
-        </CardContent>
-      )}
+      <CardContent className="px-4 pb-4">
+        {editing && (
+          <div className="bg-white p-4 rounded-lg border border-blue-100 shadow-sm mt-2">
+            <SprintForm
+              defaultValues={{
+                name: sprint.name,
+                goal: sprint.goal ?? "",
+                start_date: sprint.start_date ?? "",
+                end_date: sprint.end_date ?? "",
+              }}
+              onSubmit={(data) =>
+                updateSprint(
+                  { sprintId: sprint.id, payload: data },
+                  { onSuccess: () => setEditing(false) },
+                )
+              }
+              onCancel={() => setEditing(false)}
+              isPending={isUpdating}
+              submitLabel="Kaydet"
+            />
+          </div>
+        )}
 
-      {/* Görev listesi */}
-      {expanded && !editing && (
-        <CardContent className="pt-0 pb-4 space-y-2">
-          {allTasks.length === 0 ? (
-            <p className="text-sm text-muted-foreground py-2 px-3">
-              Bu sprint'te henüz görev yok.
-            </p>
-          ) : (
-            <div className="space-y-0.5">
+        {expanded && !editing && (
+          <div className="mt-2 space-y-1">
+            <div className="min-h-[20px]">
               {allTasks.map((task) => (
                 <SprintTaskRow
                   key={task.id}
@@ -492,76 +483,62 @@ function SprintCard({ sprint, projectId, canEdit }: SprintCardProps) {
                   canEdit={canEdit && sprint.status !== "completed"}
                 />
               ))}
-            </div>
-          )}
-
-          {/* Görev ekle */}
-          {canEdit && sprint.status !== "completed" && (
-            <>
-              {addingTask ? (
-                <div className="border rounded-lg p-3 mt-2 space-y-2">
-                  <div className="flex items-center justify-between">
-                    <p className="text-sm font-medium">
-                      Backlog'dan Görev Ekle
-                    </p>
-                    <button
-                      onClick={() => setAddingTask(false)}
-                      className="text-muted-foreground hover:text-foreground"
-                    >
-                      <X className="size-4" />
-                    </button>
-                  </div>
-                  <BacklogPicker
-                    sprintId={sprint.id}
-                    projectId={projectId}
-                    currentSprintTaskIds={sprintTaskIds}
-                    onClose={() => setAddingTask(false)}
-                  />
-                </div>
-              ) : (
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="h-7 text-xs text-muted-foreground hover:text-foreground gap-1 mt-1"
-                  onClick={() => setAddingTask(true)}
-                >
-                  <Plus className="size-3" />
-                  Görev ekle
-                </Button>
+              {allTasks.length === 0 && (
+                <p className="text-[11px] text-gray-400 py-3 text-center border border-dashed rounded-md">
+                  Bu sprint henüz boş.
+                </p>
               )}
-            </>
-          )}
-        </CardContent>
-      )}
+            </div>
+
+            {canEdit && sprint.status !== "completed" && (
+              <div className="pt-2">
+                {addingTask ? (
+                  <div className="bg-white border rounded-lg p-3 shadow-md border-blue-200">
+                    <div className="flex items-center justify-between mb-2">
+                      <p className="text-[11px] font-bold text-gray-700 uppercase tracking-widest">
+                        Backlog'dan Seç
+                      </p>
+                      <button onClick={() => setAddingTask(false)}>
+                        <X className="size-3.5 text-gray-400" />
+                      </button>
+                    </div>
+                    <BacklogPicker
+                      sprintId={sprint.id}
+                      projectId={projectId}
+                      currentSprintTaskIds={sprintTaskIds}
+                      onClose={() => setAddingTask(false)}
+                    />
+                  </div>
+                ) : (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => setAddingTask(true)}
+                    className="h-7 text-[11px] font-bold text-blue-600 hover:bg-blue-50 gap-1"
+                  >
+                    <Plus className="size-3" /> GÖREV EKLE
+                  </Button>
+                )}
+              </div>
+            )}
+          </div>
+        )}
+      </CardContent>
     </Card>
   );
 }
 
-// ─── SprintsPage ──────────────────────────────────────────────
+// ─── Ana Sayfa ────────────────────────
 
 export default function SprintsPage() {
   const { id: projectId } = useParams<{ id: string }>();
   const [createOpen, setCreateOpen] = useState(false);
   const { canEdit } = usePermission(projectId!);
-
   const { data: sprints = [], isLoading } = useSprints(projectId!);
   const { mutate: createSprint, isPending: isCreating } = useCreateSprint(
     projectId!,
   );
 
-  const handleCreate = (data: SprintFormData) => {
-    createSprint(
-      {
-        name: data.name,
-        goal: data.goal || undefined,
-        start_date: data.start_date || undefined,
-        end_date: data.end_date || undefined,
-      },
-      { onSuccess: () => setCreateOpen(false) },
-    );
-  };
-
-  // Sıralama: active → planning → completed
   const sorted = [...sprints].sort((a, b) => {
     const order = { active: 0, planning: 1, completed: 2 };
     return order[a.status] - order[b.status];
@@ -570,28 +547,37 @@ export default function SprintsPage() {
   if (isLoading) return <LoadingSpinner fullPage />;
 
   return (
-    <div className="space-y-4">
-      {/* Üst bar */}
-      <div className="flex items-center justify-between">
-        <h2 className="text-lg font-semibold flex items-center gap-2">
-          <Zap className="size-5" />
-          Sprintler
-        </h2>
+    <div className="space-y-6 animate-in fade-in duration-500">
+      <div className="flex items-center justify-between px-1">
+        <div>
+          <nav className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest mb-1">
+            Planlama / Çevik
+          </nav>
+          <h1 className="text-2xl font-bold text-gray-900 tracking-tight flex items-center gap-2">
+            <Zap className="size-6 text-blue-600" /> Sprintler
+          </h1>
+        </div>
 
         {canEdit() && (
           <Dialog open={createOpen} onOpenChange={setCreateOpen}>
             <DialogTrigger asChild>
-              <Button size="sm" className="gap-1.5">
-                <Plus className="size-4" />
-                Sprint Oluştur
+              <Button
+                size="sm"
+                className="bg-blue-600 hover:bg-blue-700 font-bold px-4 shadow-sm"
+              >
+                <Plus className="size-4 mr-1.5" /> SPRİNT OLUŞTUR
               </Button>
             </DialogTrigger>
-            <DialogContent>
+            <DialogContent className="sm:max-w-md border-none shadow-2xl">
               <DialogHeader>
-                <DialogTitle>Yeni Sprint</DialogTitle>
+                <DialogTitle className="text-xl font-bold">
+                  Yeni Sprint
+                </DialogTitle>
               </DialogHeader>
               <SprintForm
-                onSubmit={handleCreate}
+                onSubmit={(data) =>
+                  createSprint(data, { onSuccess: () => setCreateOpen(false) })
+                }
                 onCancel={() => setCreateOpen(false)}
                 isPending={isCreating}
                 submitLabel="Oluştur"
@@ -601,32 +587,45 @@ export default function SprintsPage() {
         )}
       </div>
 
-      {/* İçerik */}
-      {sorted.length === 0 ? (
-        <EmptyState
-          title="Henüz sprint yok"
-          description="İlk sprinti oluşturmak için Sprint Oluştur butonuna tıkla."
-          action={
-            canEdit() ? (
-              <Button onClick={() => setCreateOpen(true)} size="sm">
-                <Plus className="size-4 mr-1.5" />
-                Sprint Oluştur
-              </Button>
-            ) : undefined
-          }
-        />
-      ) : (
-        <div className="space-y-4">
-          {sorted.map((sprint) => (
+      <div className="space-y-4">
+        {sorted.length === 0 ? (
+          <EmptyState
+            title="Sprint Planlanmadı"
+            description="Projeyi başlatmak için bir sprint oluşturun ve görevleri buraya taşıyın."
+            icon={<Zap className="size-12" />}
+          />
+        ) : (
+          sorted.map((s) => (
             <SprintCard
-              key={sprint.id}
-              sprint={sprint}
+              key={s.id}
+              sprint={s}
               projectId={projectId!}
               canEdit={canEdit()}
             />
-          ))}
-        </div>
-      )}
+          ))
+        )}
+      </div>
     </div>
   );
+}
+
+// Gerekli Interface Tanımları
+interface TaskRowProps {
+  taskId: string;
+  title: string;
+  status: string;
+  sprintId: string;
+  projectId: string;
+  canEdit: boolean;
+}
+interface BacklogPickerProps {
+  sprintId: string;
+  projectId: string;
+  currentSprintTaskIds: Set<string>;
+  onClose: () => void;
+}
+interface SprintCardProps {
+  sprint: Sprint;
+  projectId: string;
+  canEdit: boolean;
 }

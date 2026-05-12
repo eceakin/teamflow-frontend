@@ -1,34 +1,35 @@
 import { type Task, type TaskPriority } from "@/types/task";
 import { cn } from "@/lib/utils";
 
-// ─── Öncelik badge renkleri ───────────────────────────────────
+// ─── Öncelik Yapılandırması (Görseldeki ikonik renk tonları) ────────────────
 
 const priorityConfig: Record<
   TaskPriority,
-  { label: string; className: string }
+  { label: string; className: string; dotColor: string }
 > = {
   critical: {
     label: "Kritik",
-    className: "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400",
+    className: "text-red-600 dark:text-red-400",
+    dotColor: "bg-red-600",
   },
   high: {
     label: "Yüksek",
-    className:
-      "bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400",
+    className: "text-orange-600 dark:text-orange-400",
+    dotColor: "bg-orange-600",
   },
   medium: {
     label: "Orta",
-    className:
-      "bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400",
+    className: "text-yellow-600 dark:text-yellow-400",
+    dotColor: "bg-yellow-600",
   },
   low: {
     label: "Düşük",
-    className:
-      "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400",
+    className: "text-green-600 dark:text-green-400",
+    dotColor: "bg-green-600",
   },
 };
 
-// ─── Avatar ───────────────────────────────────────────────────
+// ─── Avatar Bileşeni ──────────────────────────────────────────
 
 function AssigneeAvatar({
   username,
@@ -43,21 +44,21 @@ function AssigneeAvatar({
         src={avatarUrl}
         alt={username}
         title={username}
-        className="w-6 h-6 rounded-full object-cover ring-2 ring-background"
+        className="w-6 h-6 rounded-full object-cover ring-2 ring-white dark:ring-gray-800"
       />
     );
   }
   return (
     <div
       title={username}
-      className="w-6 h-6 rounded-full bg-muted flex items-center justify-center text-[10px] font-semibold text-muted-foreground ring-2 ring-background"
+      className="w-6 h-6 rounded-full bg-blue-100 flex items-center justify-center text-[9px] font-bold text-blue-700 ring-2 ring-white dark:ring-gray-800"
     >
       {username[0]?.toUpperCase()}
     </div>
   );
 }
 
-// ─── Vade tarihi rengi ────────────────────────────────────────
+// ─── Vade Tarihi Renk Mantığı ──────────────────────────────────
 
 function dueDateClass(dateStr: string | null): string {
   if (!dateStr) return "";
@@ -70,11 +71,11 @@ function dueDateClass(dateStr: string | null): string {
   return "text-muted-foreground";
 }
 
-// ─── TaskCard ─────────────────────────────────────────────────
+// ─── TaskCard Ana Bileşen ──────────────────────────────────────
 
 interface TaskCardProps {
   task: Task;
-  /** Sadece drag handle ikonuna uygulanır */
+  /** Kartın tamamını sürüklenebilir yapar */
   dragHandleProps?: React.HTMLAttributes<HTMLDivElement>;
   isDragging?: boolean;
   onClick?: (task: Task) => void;
@@ -87,125 +88,98 @@ export default function TaskCard({
   onClick,
 }: TaskCardProps) {
   const priority = priorityConfig[task.priority];
-
-  // DÜZELTME BURADA: Eğer undefined gelirse boş dizi kullan.
   const labels = task.labels ?? [];
   const assignees = task.assignees ?? [];
 
   return (
     <div
       className={cn(
-        "group bg-card rounded-lg border border-border",
-        "transition-all duration-150",
-        isDragging && "opacity-50 rotate-1 shadow-xl",
-        !isDragging && "hover:shadow-md hover:border-ring/40",
+        "group bg-white dark:bg-gray-800 rounded border border-kanban-border transition-all duration-200 select-none",
+        isDragging
+          ? "shadow-2xl rotate-2 opacity-90 border-blue-500 ring-2 ring-blue-500/20"
+          : "shadow-jira-card hover:bg-gray-50 dark:hover:bg-gray-700/50 hover:border-kanban-border",
       )}
+      // Görseldeki gibi kartın her yerinden tutulabilmesi için props buraya eklendi
+      {...dragHandleProps}
     >
-      <div className="flex items-stretch">
-        {/* ── Drag handle ── */}
-        {dragHandleProps && (
-          <div
-            {...dragHandleProps}
-            className="flex items-center justify-center px-2 cursor-grab active:cursor-grabbing text-muted-foreground/40 hover:text-muted-foreground transition-colors select-none shrink-0 touch-none"
-            onClick={(e) => e.stopPropagation()}
-            aria-label="Sürükle"
-          >
-            <svg
-              width="10"
-              height="16"
-              viewBox="0 0 10 16"
-              fill="currentColor"
-              aria-hidden="true"
-            >
-              <circle cx="2" cy="2" r="1.5" />
-              <circle cx="8" cy="2" r="1.5" />
-              <circle cx="2" cy="8" r="1.5" />
-              <circle cx="8" cy="8" r="1.5" />
-              <circle cx="2" cy="14" r="1.5" />
-              <circle cx="8" cy="14" r="1.5" />
-            </svg>
+      <div
+        role="button"
+        tabIndex={0}
+        onClick={() => onClick?.(task)}
+        onKeyDown={(e) => {
+          if (e.key === "Enter" || e.key === " ") onClick?.(task);
+        }}
+        className="p-3 space-y-3 cursor-pointer"
+      >
+        {/* Üst Kısım: Başlık */}
+        <div>
+          <p className="text-[13px] leading-snug font-normal text-gray-800 dark:text-gray-200 line-clamp-3">
+            {task.title}
+          </p>
+        </div>
+
+        {/* Orta Kısım: Etiketler (Labels) */}
+        {labels.length > 0 && (
+          <div className="flex flex-wrap gap-1">
+            {labels.map((label) => (
+              <span
+                key={label.id}
+                className="px-1.5 py-0.5 rounded-sm text-[10px] font-semibold uppercase tracking-tight"
+                style={{
+                  backgroundColor: label.color + "22",
+                  color: label.color,
+                }}
+              >
+                {label.name}
+              </span>
+            ))}
           </div>
         )}
 
-        {/* ── Tıklanabilir kart gövdesi ── */}
-        <div
-          role="button"
-          tabIndex={0}
-          onClick={() => onClick?.(task)}
-          onKeyDown={(e) => {
-            if (e.key === "Enter" || e.key === " ") onClick?.(task);
-          }}
-          className="flex-1 min-w-0 p-3 space-y-2.5 cursor-pointer select-none"
-        >
-          {/* Öncelik badge + başlık */}
-          <div className="space-y-1">
-            <span
-              className={cn(
-                "inline-block text-[10px] font-semibold px-1.5 py-0.5 rounded",
-                priority.className,
-              )}
-            >
-              {priority.label}
-            </span>
-            <p className="text-sm font-medium leading-snug line-clamp-2 text-foreground">
-              {task.title}
-            </p>
+        {/* Alt Satır: Öncelik, Vade ve Avatarlar */}
+        <div className="flex items-center justify-between pt-1">
+          <div className="flex items-center gap-3">
+            {/* Öncelik Göstergesi */}
+            <div className="flex items-center gap-1.5">
+              <div className={cn("w-2 h-2 rounded-full", priority.dotColor)} />
+              <span
+                className={cn(
+                  "text-[10px] font-bold uppercase tracking-tighter opacity-80",
+                  priority.className,
+                )}
+              >
+                {priority.label}
+              </span>
+            </div>
+
+            {/* Vade Tarihi */}
+            {task.due_date && (
+              <span
+                className={cn(
+                  "text-[10px] font-medium",
+                  dueDateClass(task.due_date),
+                )}
+              >
+                {new Date(task.due_date).toLocaleDateString("tr-TR", {
+                  day: "numeric",
+                  month: "short",
+                })}
+              </span>
+            )}
           </div>
 
-          {/* Etiketler (Düzeltildi) */}
-          {labels.length > 0 && (
-            <div className="flex flex-wrap gap-1">
-              {labels.map((label) => (
-                <span
-                  key={label.id}
-                  className="inline-flex items-center gap-1 text-[10px] px-1.5 py-0.5 rounded-full font-medium"
-                  style={{
-                    backgroundColor: label.color + "22",
-                    color: label.color,
-                    border: `1px solid ${label.color}44`,
-                  }}
-                >
-                  <span
-                    className="w-1.5 h-1.5 rounded-full"
-                    style={{ backgroundColor: label.color }}
-                  />
-                  {label.name}
-                </span>
-              ))}
-            </div>
-          )}
-
-          {/* Alt satır: vade + avatarlar */}
-          <div className="flex items-center justify-between pt-0.5">
-            <span
-              className={cn(
-                "text-[10px] font-medium",
-                dueDateClass(task.due_date),
-              )}
-            >
-              {task.due_date
-                ? new Date(task.due_date).toLocaleDateString("tr-TR", {
-                    day: "numeric",
-                    month: "short",
-                  })
-                : ""}
-            </span>
-
-            {/* Atananlar (Düzeltildi) */}
-            {assignees.length > 0 && (
-              <div className="flex -space-x-1.5">
-                {assignees.slice(0, 3).map((a) => (
-                  <AssigneeAvatar
-                    key={a.id}
-                    username={a.full_name || a.username}
-                    avatarUrl={a.avatar_url}
-                  />
-                ))}
-                {assignees.length > 3 && (
-                  <div className="w-6 h-6 rounded-full bg-muted flex items-center justify-center text-[10px] font-semibold text-muted-foreground ring-2 ring-background">
-                    +{assignees.length - 3}
-                  </div>
-                )}
+          {/* Atanan Kişiler (Assignees) */}
+          <div className="flex -space-x-1.5 items-center">
+            {assignees.slice(0, 3).map((a) => (
+              <AssigneeAvatar
+                key={a.id}
+                username={a.full_name || a.username}
+                avatarUrl={a.avatar_url}
+              />
+            ))}
+            {assignees.length > 3 && (
+              <div className="w-6 h-6 rounded-full bg-gray-100 dark:bg-gray-700 flex items-center justify-center text-[9px] font-bold text-gray-500 ring-2 ring-white dark:ring-gray-800">
+                +{assignees.length - 3}
               </div>
             )}
           </div>

@@ -11,7 +11,7 @@ import CreateTaskModal from "@/components/tasks/CreateTaskModal";
 import { LoadingSpinner, EmptyState } from "@/components/shared/feedback";
 import { Button } from "@/components/ui/button";
 import type { Task, TaskStatus } from "@/types/task";
-import { Plus, LayoutGrid } from "lucide-react";
+import { Plus } from "lucide-react";
 
 export default function TasksBoardPage() {
   const { id: projectId } = useParams<{ id: string }>();
@@ -22,6 +22,7 @@ export default function TasksBoardPage() {
     status: "",
     assignee_id: "",
     sprint_id: "",
+    search: "",
   });
 
   const [createOpen, setCreateOpen] = useState(false);
@@ -32,7 +33,6 @@ export default function TasksBoardPage() {
     isBoardRoute ? "board" : "list",
   );
 
-  // URL manuel değişirse (ileri/geri butonları) view'ı senkronize et
   useEffect(() => {
     if (location.pathname.includes("/board")) {
       setView("board");
@@ -44,7 +44,6 @@ export default function TasksBoardPage() {
     }
   }, [location.pathname]);
 
-  // 2. View değiştiğinde hem state'i güncelle hem de URL'i değiştir
   const handleViewChange = (newView: "board" | "list") => {
     setView(newView);
     navigate(
@@ -77,7 +76,6 @@ export default function TasksBoardPage() {
 
   const handleTaskClick = (task: Task) => {
     navigate(`/projects/${projectId}/tasks/${task.id}`, {
-      // Arkadaki sayfanın durumunu koruyarak modalı açması için mevcut lokasyonu saklıyoruz
       state: { backgroundLocation: location },
     });
   };
@@ -85,57 +83,72 @@ export default function TasksBoardPage() {
   if (isLoading) return <LoadingSpinner fullPage />;
 
   return (
-    <div className="space-y-4">
-      <div className="flex items-center justify-between">
-        <h2 className="text-lg font-semibold flex items-center gap-2">
-          <LayoutGrid className="size-5" />
-          Görev Panosu
-        </h2>
-        <Button
-          onClick={() => setCreateOpen(true)}
-          size="sm"
-          className="gap-1.5"
-        >
-          <Plus className="size-4" />
-          Görev Ekle
-        </Button>
+    /* Jira tasarımı için zemin saf beyaz yapıldı ve iç boşluklar düzenlendi */
+    <div className="min-h-screen bg-white">
+      <div className="flex flex-col space-y-6 pt-2 pb-4">
+        {/* Sayfa Başlığı ve Aksiyon Butonu - Jira stili ferah yerleşim */}
+        <div className="flex items-center justify-between px-1">
+          <div>
+            <nav className="text-xs text-muted-foreground mb-1">
+              Projeler / TeamFlow
+            </nav>
+            <h1 className="text-2xl font-semibold text-gray-900 tracking-tight">
+              {view === "board" ? "Kanban Board" : "Görev Listesi"}
+            </h1>
+          </div>
+
+          <Button
+            onClick={() => setCreateOpen(true)}
+            size="sm"
+            className="bg-blue-600 hover:bg-blue-700 text-white font-medium px-4"
+          >
+            <Plus className="size-4 mr-1.5" />
+            Görev Ekle
+          </Button>
+        </div>
+
+        {/* Filtre Çubuğu - Başlık ile arası açıldı (space-y-6) */}
+        <FilterBar
+          filters={filters}
+          onChange={setFilters}
+          members={members}
+          sprints={sprintOptions}
+          view={view}
+          onViewChange={handleViewChange}
+        />
+
+        {/* İçerik Alanı */}
+        <div className="flex-1">
+          {tasks.length === 0 ? (
+            <EmptyState
+              title="Görev bulunamadı"
+              description={
+                filters.status || filters.assignee_id || filters.sprint_id
+                  ? "Filtreleri temizleyerek tüm görevleri görebilirsin."
+                  : "İlk görevi oluşturmak için Görev Ekle butonuna tıkla."
+              }
+              action={
+                !filters.status &&
+                !filters.assignee_id &&
+                !filters.sprint_id ? (
+                  <Button onClick={() => setCreateOpen(true)} size="sm">
+                    <Plus className="size-4 mr-1.5" />
+                    Görev Ekle
+                  </Button>
+                ) : undefined
+              }
+            />
+          ) : view === "board" ? (
+            <KanbanBoard
+              tasks={tasks}
+              onStatusChange={handleStatusChange}
+              onTaskClick={handleTaskClick}
+            />
+          ) : (
+            <TaskListView tasks={tasks} onTaskClick={handleTaskClick} />
+          )}
+        </div>
       </div>
-
-      <FilterBar
-        filters={filters}
-        onChange={setFilters}
-        members={members}
-        sprints={sprintOptions}
-        view={view}
-        onViewChange={handleViewChange} // Artık handleViewChange fonksiyonunu çağırıyor
-      />
-
-      {tasks.length === 0 ? (
-        <EmptyState
-          title="Görev bulunamadı"
-          description={
-            filters.status || filters.assignee_id || filters.sprint_id
-              ? "Filtreleri temizleyerek tüm görevleri görebilirsin."
-              : "İlk görevi oluşturmak için Görev Ekle butonuna tıkla."
-          }
-          action={
-            !filters.status && !filters.assignee_id && !filters.sprint_id ? (
-              <Button onClick={() => setCreateOpen(true)} size="sm">
-                <Plus className="size-4 mr-1.5" />
-                Görev Ekle
-              </Button>
-            ) : undefined
-          }
-        />
-      ) : view === "board" ? (
-        <KanbanBoard
-          tasks={tasks}
-          onStatusChange={handleStatusChange}
-          onTaskClick={handleTaskClick}
-        />
-      ) : (
-        <TaskListView tasks={tasks} onTaskClick={handleTaskClick} />
-      )}
 
       <CreateTaskModal
         open={createOpen}

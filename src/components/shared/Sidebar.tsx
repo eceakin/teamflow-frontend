@@ -64,7 +64,7 @@ export default function ProjectSidebar() {
 
   return (
     <aside className="w-52 shrink-0 hidden md:block">
-      <nav className="flex flex-col gap-0.5 sticky top-[4.5rem]">
+      <nav className="flex flex-col gap-1 sticky top-[4.5rem] pr-2">
         {items.map((item) => (
           <NavLink
             key={item.path}
@@ -72,10 +72,10 @@ export default function ProjectSidebar() {
             end={item.end}
             className={({ isActive }) =>
               cn(
-                "flex items-center gap-2.5 px-3 py-2 rounded-md text-sm font-medium transition-colors",
+                "flex items-center gap-3 px-3 py-2 text-sm font-normal transition-colors border-l-4",
                 isActive
-                  ? "bg-primary text-primary-foreground"
-                  : "text-muted-foreground hover:text-foreground hover:bg-muted",
+                  ? "border-blue-600 text-blue-700 bg-blue-50/50 dark:text-blue-400 dark:border-blue-500 dark:bg-blue-900/20"
+                  : "border-transparent text-gray-600 hover:text-gray-900 hover:bg-gray-100 dark:text-gray-400 dark:hover:text-gray-100 dark:hover:bg-gray-800/50",
               )
             }
           >

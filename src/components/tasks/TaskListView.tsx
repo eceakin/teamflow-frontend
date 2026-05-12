@@ -4,41 +4,36 @@ import { cn } from "@/lib/utils";
 // ─── Yardımcı etiket haritaları ──────────────────────────────
 
 const statusLabel: Record<TaskStatus, string> = {
-  todo: "Yapılacak",
-  in_progress: "Devam Ediyor",
-  done: "Tamamlandı",
+  todo: "YAPILACAK",
+  in_progress: "DEVAM EDİYOR",
+  done: "TAMAMLANDI",
 };
 
 const statusClass: Record<TaskStatus, string> = {
-  todo: "bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300",
-  in_progress:
-    "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300",
-  done: "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300",
+  todo: "bg-gray-100 text-gray-600 border-gray-200",
+  in_progress: "bg-blue-50 text-blue-700 border-blue-200",
+  done: "bg-green-50 text-green-700 border-green-200",
 };
 
-const priorityLabel: Record<TaskPriority, string> = {
-  critical: "Kritik",
-  high: "Yüksek",
-  medium: "Orta",
-  low: "Düşük",
-};
-
-const priorityClass: Record<TaskPriority, string> = {
-  critical: "text-red-600 dark:text-red-400 font-semibold",
-  high: "text-orange-600 dark:text-orange-400",
-  medium: "text-yellow-600 dark:text-yellow-500",
-  low: "text-green-600 dark:text-green-400",
+const priorityConfig: Record<
+  TaskPriority,
+  { label: string; color: string; dot: string }
+> = {
+  critical: { label: "Kritik", color: "text-red-600", dot: "bg-red-600" },
+  high: { label: "Yüksek", color: "text-orange-600", dot: "bg-orange-600" },
+  medium: { label: "Orta", color: "text-yellow-600", dot: "bg-yellow-600" },
+  low: { label: "Düşük", color: "text-green-600", dot: "bg-green-600" },
 };
 
 function dueDateClass(dateStr: string | null): string {
-  if (!dateStr) return "text-muted-foreground";
+  if (!dateStr) return "text-gray-400";
   const today = new Date();
   today.setHours(0, 0, 0, 0);
   const due = new Date(dateStr);
-  if (due < today) return "text-red-600 dark:text-red-400 font-medium";
+  if (due < today) return "text-red-600 font-semibold";
   const diff = (due.getTime() - today.getTime()) / 86_400_000;
-  if (diff <= 2) return "text-orange-500 dark:text-orange-400";
-  return "text-muted-foreground";
+  if (diff <= 2) return "text-orange-500 font-medium";
+  return "text-gray-600";
 }
 
 // ─── TaskListView ─────────────────────────────────────────────
@@ -54,66 +49,79 @@ export default function TaskListView({
 }: TaskListViewProps) {
   if (tasks.length === 0) {
     return (
-      <div className="py-16 text-center text-sm text-muted-foreground">
-        Görev bulunamadı.
+      <div className="py-20 text-center bg-white rounded-lg border border-dashed border-gray-300">
+        <p className="text-sm text-gray-500 font-medium">
+          Henüz bir görev bulunmuyor.
+        </p>
       </div>
     );
   }
 
   return (
-    <div className="rounded-xl border border-border overflow-hidden">
-      <table className="w-full text-sm">
+    /* Jira stili beyaz zemin ve temiz border yapısı */
+    <div className="bg-white rounded border border-gray-200 overflow-hidden shadow-sm">
+      <table className="w-full text-left border-collapse">
         <thead>
-          <tr className="border-b border-border bg-muted/50">
-            <th className="text-left px-4 py-2.5 text-xs font-semibold text-muted-foreground">
-              Görev
+          <tr className="border-b border-gray-200 bg-gray-50/50">
+            <th className="px-4 py-3 text-[11px] font-bold text-gray-500 uppercase tracking-wider w-12 text-center">
+              Tip
             </th>
-            <th className="text-left px-4 py-2.5 text-xs font-semibold text-muted-foreground hidden sm:table-cell">
+            <th className="px-4 py-3 text-[11px] font-bold text-gray-500 uppercase tracking-wider">
+              Başlık
+            </th>
+            <th className="px-4 py-3 text-[11px] font-bold text-gray-500 uppercase tracking-wider hidden sm:table-cell w-32">
               Durum
             </th>
-            <th className="text-left px-4 py-2.5 text-xs font-semibold text-muted-foreground hidden md:table-cell">
+            <th className="px-4 py-3 text-[11px] font-bold text-gray-500 uppercase tracking-wider hidden md:table-cell w-28">
               Öncelik
             </th>
-            <th className="text-left px-4 py-2.5 text-xs font-semibold text-muted-foreground hidden md:table-cell">
+            <th className="px-4 py-3 text-[11px] font-bold text-gray-500 uppercase tracking-wider hidden md:table-cell">
               Etiketler
             </th>
-            <th className="text-left px-4 py-2.5 text-xs font-semibold text-muted-foreground hidden lg:table-cell">
-              Atananlar
+            <th className="px-4 py-3 text-[11px] font-bold text-gray-500 uppercase tracking-wider hidden lg:table-cell w-28">
+              Sorumlu
             </th>
-            <th className="text-left px-4 py-2.5 text-xs font-semibold text-muted-foreground hidden lg:table-cell">
-              Vade
+            <th className="px-4 py-3 text-[11px] font-bold text-gray-500 uppercase tracking-wider hidden lg:table-cell w-32">
+              Vade Tarihi
             </th>
           </tr>
         </thead>
-        <tbody className="divide-y divide-border">
+        <tbody className="divide-y divide-gray-100">
           {tasks.map((task) => {
-            // DÜZELTME BURADA: Eğer veri undefined gelirse boş dizi kullanıyoruz
             const labels = task.labels ?? [];
             const assignees = task.assignees ?? [];
+            const priority = priorityConfig[task.priority];
 
             return (
               <tr
                 key={task.id}
                 onClick={() => onTaskClick?.(task)}
-                className="hover:bg-muted/30 cursor-pointer transition-colors"
+                className="hover:bg-blue-50/30 cursor-pointer transition-colors group"
               >
-                {/* Başlık */}
-                <td className="px-4 py-3">
-                  <p className="font-medium text-foreground line-clamp-1">
-                    {task.title}
-                  </p>
-                  {task.description && (
-                    <p className="text-xs text-muted-foreground line-clamp-1 mt-0.5">
-                      {task.description}
-                    </p>
-                  )}
+                {/* Tip İkonu (Simüle edilmiş) */}
+                <td className="px-4 py-4 text-center">
+                  <div className="size-4 bg-blue-500 rounded-sm mx-auto flex items-center justify-center text-[8px] text-white font-bold">
+                    S
+                  </div>
                 </td>
 
-                {/* Durum */}
-                <td className="px-4 py-3 hidden sm:table-cell">
+                {/* Başlık ve ID */}
+                <td className="px-4 py-4">
+                  <div className="flex flex-col">
+                    <span className="text-sm font-normal text-gray-900 group-hover:text-blue-600 transition-colors line-clamp-1">
+                      {task.title}
+                    </span>
+                    <span className="text-[10px] text-gray-400 font-medium uppercase mt-0.5">
+                      TF-{task.id.slice(0, 4)}
+                    </span>
+                  </div>
+                </td>
+
+                {/* Durum Badge */}
+                <td className="px-4 py-4 hidden sm:table-cell">
                   <span
                     className={cn(
-                      "text-xs px-2 py-0.5 rounded-full font-medium",
+                      "text-[10px] px-2 py-1 rounded-sm border font-bold tracking-tight",
                       statusClass[task.status],
                     )}
                   >
@@ -121,66 +129,68 @@ export default function TaskListView({
                   </span>
                 </td>
 
-                {/* Öncelik */}
-                <td className="px-4 py-3 hidden md:table-cell">
-                  <span className={cn("text-xs", priorityClass[task.priority])}>
-                    {priorityLabel[task.priority]}
-                  </span>
+                {/* Öncelik İkonlu Metin */}
+                <td className="px-4 py-4 hidden md:table-cell">
+                  <div className="flex items-center gap-2">
+                    <div className={cn("size-2 rounded-full", priority.dot)} />
+                    <span className={cn("text-xs font-medium", priority.color)}>
+                      {priority.label}
+                    </span>
+                  </div>
                 </td>
 
-                {/* Etiketler (Düzeltildi) */}
-                <td className="px-4 py-3 hidden md:table-cell">
-                  <div className="flex flex-wrap gap-1">
+                {/* Etiketler */}
+                <td className="px-4 py-4 hidden md:table-cell">
+                  <div className="flex flex-wrap gap-1.5">
                     {labels.slice(0, 2).map((l) => (
                       <span
                         key={l.id}
-                        className="text-[10px] px-1.5 py-0.5 rounded-full font-medium"
+                        className="text-[10px] px-2 py-0.5 rounded-sm font-semibold tracking-tight"
                         style={{
-                          backgroundColor: l.color + "22",
+                          backgroundColor: l.color + "15",
                           color: l.color,
-                          border: `1px solid ${l.color}44`,
                         }}
                       >
                         {l.name}
                       </span>
                     ))}
                     {labels.length > 2 && (
-                      <span className="text-[10px] text-muted-foreground">
+                      <span className="text-[10px] text-gray-400 font-bold">
                         +{labels.length - 2}
                       </span>
                     )}
                   </div>
                 </td>
 
-                {/* Atananlar (Düzeltildi) */}
-                <td className="px-4 py-3 hidden lg:table-cell">
-                  <div className="flex -space-x-1.5">
-                    {assignees.slice(0, 3).map((a) =>
-                      a.avatar_url ? (
-                        <img
-                          key={a.id}
-                          src={a.avatar_url}
-                          alt={a.username}
-                          title={a.full_name || a.username}
-                          className="w-6 h-6 rounded-full object-cover ring-2 ring-background"
-                        />
-                      ) : (
-                        <div
-                          key={a.id}
-                          title={a.full_name || a.username}
-                          className="w-6 h-6 rounded-full bg-muted flex items-center justify-center text-[10px] font-semibold text-muted-foreground ring-2 ring-background"
-                        >
-                          {(a.full_name || a.username)[0]?.toUpperCase()}
-                        </div>
-                      ),
-                    )}
+                {/* Sorumlu Avatarları */}
+                <td className="px-4 py-4 hidden lg:table-cell">
+                  <div className="flex -space-x-2">
+                    {assignees.slice(0, 3).map((a) => (
+                      <div key={a.id} className="relative group/avatar">
+                        {a.avatar_url ? (
+                          <img
+                            src={a.avatar_url}
+                            alt={a.username}
+                            title={a.full_name || a.username}
+                            className="w-6 h-6 rounded-full object-cover ring-2 ring-white"
+                          />
+                        ) : (
+                          <div
+                            title={a.full_name || a.username}
+                            className="w-6 h-6 rounded-full bg-blue-100 flex items-center justify-center text-[9px] font-bold text-blue-600 ring-2 ring-white"
+                          >
+                            {(a.full_name || a.username)[0]?.toUpperCase()}
+                          </div>
+                        )}
+                      </div>
+                    ))}
                   </div>
                 </td>
 
-                {/* Vade tarihi */}
+                {/* Vade Tarihi */}
                 <td
                   className={cn(
-                    "px-4 py-3 text-xs hidden lg:table-cell",
+                    "px-4 py-4 text-[12px] hidden lg:table-cell",
                     dueDateClass(task.due_date),
                   )}
                 >

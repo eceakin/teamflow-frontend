@@ -1,18 +1,8 @@
-import { NavLink, Outlet, useParams } from "react-router-dom";
+import { Outlet, useParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { getProjectApi } from "@/lib/api/projects";
-import { cn } from "@/lib/utils";
 import Navbar from "@/components/shared/Navbar";
-
-const tabs = [
-  { label: "Genel Bakış", path: "" },
-  { label: "Kanban Board", path: "board" },
-  { label: "Görev Listesi", path: "tasks" },
-  { label: "Sprintler", path: "sprints" }, // ← artık SprintsPage'e bağlı
-  { label: "Üyeler", path: "members" },
-  { label: "Etiketler", path: "labels" },
-  { label: "Ayarlar", path: "settings" },
-];
+import ProjectSidebar from "@/components/shared/Sidebar"; // Yeni Sidebar entegre edildi
 
 export default function ProjectLayout() {
   const { id } = useParams<{ id: string }>();
@@ -25,7 +15,7 @@ export default function ProjectLayout() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center text-muted-foreground">
+      <div className="min-h-screen flex items-center justify-center text-muted-foreground bg-white">
         Yükleniyor...
       </div>
     );
@@ -33,53 +23,42 @@ export default function ProjectLayout() {
 
   if (!project) {
     return (
-      <div className="min-h-screen flex items-center justify-center text-muted-foreground">
+      <div className="min-h-screen flex items-center justify-center text-muted-foreground bg-white">
         Proje bulunamadı
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-white">
+      {" "}
+      {/* Zemin Jira stili saf beyaz yapıldı */}
       <Navbar />
-
-      <div className="border-b bg-background">
-        <div className="max-w-6xl mx-auto px-4 h-10 flex items-center gap-2 text-sm text-muted-foreground">
-          <span>Projelerim</span>
+      {/* Proje Üst Bilgi Barı - Jira navigasyon hiyerarşisi */}
+      <div className="border-b bg-white">
+        <div className="px-6 h-12 flex items-center gap-2 text-xs text-muted-foreground">
+          <span>Projeler</span>
           <span>/</span>
-          <span className="font-semibold text-foreground">{project.title}</span>
+          <span>{project.title}</span>
+          <span>/</span>
+          <span className="font-medium text-foreground">Kanban Board</span>
         </div>
       </div>
+      <div className="flex">
+        {/* Sol Menü (Sidebar) ve Dikey Ayırıcı Çizgi */}
+        <aside className="border-r border-gray-200 min-h-[calc(100vh-7rem)] bg-white shrink-0">
+          <div className="p-4 w-60">
+            <ProjectSidebar />
+          </div>
+        </aside>
 
-      <div className="border-b overflow-x-auto">
-        <div className="max-w-6xl mx-auto px-4 flex gap-1 min-w-max">
-          {tabs.map((tab) => (
-            <NavLink
-              key={tab.path}
-              to={
-                tab.path === ""
-                  ? `/projects/${id}`
-                  : `/projects/${id}/${tab.path}`
-              }
-              end={tab.path === ""}
-              className={({ isActive }) =>
-                cn(
-                  "px-4 py-3 text-sm font-medium border-b-2 transition-colors whitespace-nowrap",
-                  isActive
-                    ? "border-primary text-primary"
-                    : "border-transparent text-muted-foreground hover:text-foreground",
-                )
-              }
-            >
-              {tab.label}
-            </NavLink>
-          ))}
-        </div>
+        {/* Ana İçerik Alanı (Kanban Board, List vb.) */}
+        <main className="flex-1 overflow-hidden bg-white">
+          <div className="p-8 max-w-[1600px]">
+            <Outlet />
+          </div>
+        </main>
       </div>
-
-      <main className="max-w-6xl mx-auto px-4 py-8">
-        <Outlet />
-      </main>
     </div>
   );
 }

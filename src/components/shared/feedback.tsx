@@ -24,10 +24,13 @@ export function LoadingSpinner({
     <div
       role="status"
       aria-label={label}
-      className={cn("flex items-center justify-center gap-2", className)}
+      className={cn(
+        "flex flex-col items-center justify-center gap-3",
+        className,
+      )}
     >
       <svg
-        className="animate-spin text-muted-foreground"
+        className="animate-spin text-blue-600" // Jira kurumsal mavisi eklendi
         xmlns="http://www.w3.org/2000/svg"
         fill="none"
         viewBox="0 0 24 24"
@@ -35,7 +38,7 @@ export function LoadingSpinner({
         height={px}
       >
         <circle
-          className="opacity-25"
+          className="opacity-10"
           cx="12"
           cy="12"
           r="10"
@@ -43,20 +46,22 @@ export function LoadingSpinner({
           strokeWidth="4"
         />
         <path
-          className="opacity-75"
+          className="opacity-100"
           fill="currentColor"
           d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"
         />
       </svg>
       {size !== "sm" && (
-        <span className="text-sm text-muted-foreground">{label}</span>
+        <span className="text-xs font-bold text-kanban-text uppercase tracking-widest">
+          {label}
+        </span>
       )}
     </div>
   );
 
   if (fullPage) {
     return (
-      <div className="min-h-[50vh] flex items-center justify-center">
+      <div className="fixed inset-0 bg-white/80 backdrop-blur-[1px] z-[100] flex items-center justify-center">
         {spinner}
       </div>
     );
@@ -85,16 +90,20 @@ export function EmptyState({
   return (
     <div
       className={cn(
-        "flex flex-col items-center justify-center py-16 px-4 text-center",
+        "flex flex-col items-center justify-center py-20 px-4 text-center bg-white rounded-lg border border-dashed border-kanban-border",
         className,
       )}
     >
-      {icon && <div className="mb-4 text-muted-foreground/50">{icon}</div>}
-      <p className="font-medium text-foreground mb-1">{title}</p>
+      {icon && <div className="mb-4 text-kanban-text opacity-40">{icon}</div>}
+      <p className="text-sm font-bold text-gray-800 uppercase tracking-tight mb-1">
+        {title}
+      </p>
       {description && (
-        <p className="text-sm text-muted-foreground max-w-sm">{description}</p>
+        <p className="text-xs text-kanban-text max-w-sm leading-relaxed">
+          {description}
+        </p>
       )}
-      {action && <div className="mt-4">{action}</div>}
+      {action && <div className="mt-6">{action}</div>}
     </div>
   );
 }
@@ -142,13 +151,12 @@ export class ErrorBoundary extends React.Component<
 
     return (
       <div className="min-h-[50vh] flex items-center justify-center px-4">
-        <div className="max-w-sm w-full text-center space-y-4">
-          {/* Alert icon — inline SVG */}
-          <div className="flex justify-center text-destructive">
+        <div className="max-w-sm w-full text-center space-y-4 p-8 bg-white rounded-xl shadow-jira-card border border-kanban-border">
+          <div className="flex justify-center text-red-500">
             <svg
               xmlns="http://www.w3.org/2000/svg"
-              width="40"
-              height="40"
+              width="48"
+              height="48"
               viewBox="0 0 24 24"
               fill="none"
               stroke="currentColor"
@@ -162,14 +170,20 @@ export class ErrorBoundary extends React.Component<
             </svg>
           </div>
           <div>
-            <p className="font-semibold text-foreground">
-              Bir şeyler ters gitti
+            <p className="text-sm font-bold text-gray-900 uppercase tracking-tight">
+              Bir hata oluştu
             </p>
-            <p className="text-sm text-muted-foreground mt-1">
-              {error.message || "Beklenmedik bir hata oluştu."}
+            <p className="text-xs text-kanban-text mt-2 leading-relaxed">
+              {error.message ||
+                "Beklenmedik bir hata oluştu. Lütfen sayfayı yenilemeyi deneyin."}
             </p>
           </div>
-          <Button variant="outline" size="sm" onClick={this.reset}>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={this.reset}
+            className="w-full border-kanban-border hover:bg-gray-50 text-xs font-bold uppercase tracking-widest"
+          >
             Tekrar dene
           </Button>
         </div>

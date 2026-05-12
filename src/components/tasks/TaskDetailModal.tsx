@@ -1,26 +1,5 @@
-/**
- * TaskDetailModal — Background Location Pattern
- *
- * Kullanım (TasksBoardPage veya TasksListPage içinde):
- *
- *   const navigate = useNavigate();
- *   const location = useLocation();
- *
- *   // Kart tıklandığında:
- *   navigate(`/projects/${projectId}/tasks/${task.id}`, {
- *     state: { backgroundLocation: location },
- *   });
- *
- *   // Route tanımı (ProjectLayout altında):
- *   <Route path="tasks/:taskId" element={<TaskDetailModal />} />
- *
- * Modal kapatıldığında background sayfaya (-1) geri döner.
- * Kullanıcı URL'yi doğrudan açarsa modal değil tam sayfa görünür
- * (backgroundLocation yoksa full-page render edilir).
- */
-
 import { useParams, useNavigate, useLocation } from "react-router-dom";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -54,8 +33,17 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { LoadingSpinner } from "@/components/shared/feedback";
-import { Pencil, Trash2, X, Check } from "lucide-react";
+import {
+  Pencil,
+  Trash2,
+  X,
+  Check,
+  Eye,
+  Share2,
+  MoreHorizontal,
+} from "lucide-react";
 import type { Task } from "@/types/task";
+import { cn } from "@/lib/utils";
 
 // ─── Düzenleme formu şeması ───────────────────────────────────
 
@@ -128,7 +116,7 @@ function TaskDetailContent({
     },
   });
 
-  const startEdit = () => {
+  useEffect(() => {
     reset({
       title: task.title,
       description: task.description ?? "",
@@ -136,9 +124,9 @@ function TaskDetailContent({
       status: task.status,
       due_date: task.due_date ?? "",
     });
-    setEditing(true);
-  };
+  }, [task, reset]);
 
+  const startEdit = () => setEditing(true);
   const cancelEdit = () => {
     reset();
     setEditing(false);
@@ -165,59 +153,43 @@ function TaskDetailContent({
   };
 
   return (
-    <div className="flex flex-col h-full overflow-hidden">
-      {/* ── Üst bar ── */}
-      <div className="flex items-start justify-between gap-4 pb-4 border-b shrink-0">
-        <div className="flex-1 min-w-0">
-          {editing ? (
-            <Input
-              {...register("title")}
-              className="text-base font-semibold h-auto py-1"
-              autoFocus
-            />
-          ) : (
-            <h2 className="text-base font-semibold leading-snug break-words">
-              {task.title}
-            </h2>
-          )}
-          {errors.title && (
-            <p className="text-xs text-destructive mt-0.5">
-              {errors.title.message}
-            </p>
-          )}
+    <div className="flex flex-col h-full overflow-hidden bg-white dark:bg-gray-950">
+      {/* ── Üst bar (Jira Stil Toolbar) ── */}
+      <div className="flex items-center justify-between px-4 py-3 border-b shrink-0">
+        <div className="flex items-center gap-2 text-xs font-medium text-muted-foreground uppercase tracking-widest">
+          <Eye className="size-3.5" />
+          <span>TEAMFLOW-{task.id.slice(0, 5)}</span>
         </div>
+        <div className="flex items-center gap-1">
+          <Button variant="ghost" size="icon-sm">
+            <Share2 className="size-4" />
+          </Button>
+          <Button variant="ghost" size="icon-sm">
+            <MoreHorizontal className="size-4" />
+          </Button>
 
-        {/* Eylem butonları */}
-        <div className="flex items-center gap-1 shrink-0">
-          {canEdit() && !editing && (
-            <Button
-              variant="ghost"
-              size="icon-sm"
-              onClick={startEdit}
-              aria-label="Düzenle"
-            >
-              <Pencil className="size-3.5" />
-            </Button>
-          )}
-          {editing && (
-            <>
-              <Button
-                size="icon-sm"
-                onClick={handleSubmit(onSubmit)}
-                disabled={isUpdating}
-                aria-label="Kaydet"
-              >
-                <Check className="size-3.5" />
-              </Button>
-              <Button
-                variant="ghost"
-                size="icon-sm"
-                onClick={cancelEdit}
-                aria-label="İptal"
-              >
-                <X className="size-3.5" />
-              </Button>
-            </>
+          {canEdit() && (
+            <div className="flex items-center gap-1 ml-2 border-l pl-2">
+              {editing ? (
+                <>
+                  <Button
+                    size="icon-sm"
+                    onClick={handleSubmit(onSubmit)}
+                    disabled={isUpdating}
+                    className="bg-green-600 hover:bg-green-700"
+                  >
+                    <Check className="size-4 text-white" />
+                  </Button>
+                  <Button variant="ghost" size="icon-sm" onClick={cancelEdit}>
+                    <X className="size-4" />
+                  </Button>
+                </>
+              ) : (
+                <Button variant="ghost" size="icon-sm" onClick={startEdit}>
+                  <Pencil className="size-4" />
+                </Button>
+              )}
+            </div>
           )}
 
           {canDelete() && (
@@ -226,27 +198,23 @@ function TaskDetailContent({
                 <Button
                   variant="ghost"
                   size="icon-sm"
-                  className="text-destructive hover:text-destructive"
-                  aria-label="Sil"
+                  className="text-muted-foreground hover:text-destructive"
                 >
-                  <Trash2 className="size-3.5" />
+                  <Trash2 className="size-4" />
                 </Button>
               </AlertDialogTrigger>
               <AlertDialogContent>
                 <AlertDialogHeader>
-                  <AlertDialogTitle>
-                    Görevi silmek istediğine emin misin?
-                  </AlertDialogTitle>
+                  <AlertDialogTitle>Görevi sil?</AlertDialogTitle>
                   <AlertDialogDescription>
-                    Bu işlem geri alınamaz. Görev ve yorumları kalıcı olarak
-                    silinir.
+                    Bu işlem geri alınamaz.
                   </AlertDialogDescription>
                 </AlertDialogHeader>
                 <AlertDialogFooter>
                   <AlertDialogCancel>İptal</AlertDialogCancel>
                   <AlertDialogAction
                     onClick={handleDelete}
-                    className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                    className="bg-destructive hover:bg-destructive/90"
                     disabled={isDeleting}
                   >
                     {isDeleting ? "Siliniyor..." : "Evet, Sil"}
@@ -255,178 +223,247 @@ function TaskDetailContent({
               </AlertDialogContent>
             </AlertDialog>
           )}
-
           <Button
             variant="ghost"
             size="icon-sm"
             onClick={onClose}
-            aria-label="Kapat"
+            className="ml-1"
           >
-            <X className="size-4" />
+            <X className="size-5" />
           </Button>
         </div>
       </div>
 
-      {/* ── Ana içerik: iki kolon ── */}
-      <div className="flex gap-6 pt-4 flex-1 overflow-hidden">
-        {/* Sol: açıklama + meta + dosyalar + yorumlar */}
-        <div className="flex-1 min-w-0 overflow-y-auto space-y-5 pr-1">
-          {/* Açıklama */}
-          <div className="space-y-1.5">
-            <Label className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
+      <div className="flex flex-1 overflow-hidden">
+        {/* ── SOL KOLON: Ana Detaylar ── */}
+        <div className="flex-1 overflow-y-auto px-8 py-6 space-y-8 scrollbar-thin">
+          {/* Başlık Bölümü */}
+          <div className="space-y-1">
+            {editing ? (
+              <div className="space-y-2">
+                <Input
+                  {...register("title")}
+                  className="text-2xl font-bold bg-transparent border-2 border-blue-500 focus-visible:ring-0 px-2 py-1 h-auto w-full"
+                  autoFocus
+                />
+                {errors.title && (
+                  <p className="text-xs text-destructive">
+                    {errors.title.message}
+                  </p>
+                )}
+              </div>
+            ) : (
+              <h1
+                onClick={() => canEdit() && startEdit()}
+                className="text-2xl font-bold text-gray-900 dark:text-gray-100 cursor-pointer hover:bg-gray-100/50 p-2 -ml-2 rounded transition-all leading-tight"
+              >
+                {task.title}
+              </h1>
+            )}
+          </div>
+
+          {/* Açıklama Bölümü */}
+          <div className="space-y-3">
+            <Label className="text-sm font-bold text-gray-700 dark:text-gray-300 uppercase tracking-tight">
               Açıklama
             </Label>
             {editing ? (
-              <Textarea
-                {...register("description")}
-                placeholder="Açıklama ekle..."
-                rows={4}
-              />
+              <div className="space-y-3">
+                <Textarea
+                  {...register("description")}
+                  className="text-sm min-h-[180px] focus-visible:ring-2 focus-visible:ring-blue-500 leading-relaxed"
+                  placeholder="Detaylı açıklama ekleyin..."
+                />
+                <div className="flex gap-2">
+                  <Button
+                    size="sm"
+                    onClick={handleSubmit(onSubmit)}
+                    disabled={isUpdating}
+                    className="bg-blue-600 hover:bg-blue-700"
+                  >
+                    {isUpdating ? "Kaydediliyor..." : "Kaydet"}
+                  </Button>
+                  <Button size="sm" variant="ghost" onClick={cancelEdit}>
+                    İptal
+                  </Button>
+                </div>
+              </div>
             ) : (
-              <p className="text-sm text-foreground whitespace-pre-wrap">
+              <div
+                onClick={() => canEdit() && startEdit()}
+                className="text-sm text-gray-800 dark:text-gray-200 min-h-[60px] cursor-pointer hover:bg-gray-100/50 p-3 -ml-3 rounded transition-all whitespace-pre-wrap leading-relaxed"
+              >
                 {task.description || (
-                  <span className="text-muted-foreground">Açıklama yok</span>
+                  <span className="text-muted-foreground italic">
+                    Açıklama eklemek için tıkla...
+                  </span>
                 )}
-              </p>
+              </div>
             )}
           </div>
 
-          {/* Durum + Öncelik */}
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-1.5">
-              <Label className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
-                Durum
-              </Label>
-              {editing ? (
-                <Select
-                  value={watch("status")}
-                  onValueChange={(v) =>
-                    setValue("status", v as EditFormData["status"])
-                  }
-                >
-                  <SelectTrigger className="h-8">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="todo">Yapılacak</SelectItem>
-                    <SelectItem value="in_progress">Devam Ediyor</SelectItem>
-                    <SelectItem value="done">Tamamlandı</SelectItem>
-                  </SelectContent>
-                </Select>
-              ) : (
-                <p className="text-sm">{statusLabel[task.status]}</p>
-              )}
-            </div>
-
-            <div className="space-y-1.5">
-              <Label className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
-                Öncelik
-              </Label>
-              {editing ? (
-                <Select
-                  value={watch("priority")}
-                  onValueChange={(v) =>
-                    setValue("priority", v as EditFormData["priority"])
-                  }
-                >
-                  <SelectTrigger className="h-8">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="low">Düşük</SelectItem>
-                    <SelectItem value="medium">Orta</SelectItem>
-                    <SelectItem value="high">Yüksek</SelectItem>
-                    <SelectItem value="critical">Kritik</SelectItem>
-                  </SelectContent>
-                </Select>
-              ) : (
-                <p className={`text-sm ${priorityColor[task.priority]}`}>
-                  {priorityLabel[task.priority]}
-                </p>
-              )}
-            </div>
+          {/* Dosya Ekleri */}
+          <div className="space-y-4 pt-4 border-t">
+            <h3 className="text-sm font-bold text-gray-700 dark:text-gray-300">
+              Ekler
+            </h3>
+            <AttachmentList taskId={task.id} canEdit={canEdit()} />
+            {!editing && canEdit() && (
+              <div className="pt-2">
+                <FileUpload taskId={task.id} />
+              </div>
+            )}
           </div>
 
-          {/* Vade tarihi */}
-          <div className="space-y-1.5">
-            <Label className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
-              Vade Tarihi
+          {/* Yorumlar (Aktivite) */}
+          <div className="border-t pt-8">
+            <h3 className="text-sm font-bold text-gray-700 dark:text-gray-300 mb-6 uppercase tracking-wider">
+              Aktivite
+            </h3>
+            <CommentSection taskId={task.id} />
+          </div>
+        </div>
+
+        {/* SAĞ KOLON: Sidebar (Meta Veriler) */}
+        <div className="w-[300px] shrink-0 border-l bg-gray-50/30 dark:bg-gray-900/40 px-6 py-6 space-y-7 overflow-y-auto scrollbar-none">
+          {/* Durum Seçici */}
+          <div className="space-y-2">
+            <Label className="text-[11px] font-bold text-muted-foreground uppercase tracking-widest">
+              Durum
             </Label>
             {editing ? (
-              <Input type="date" {...register("due_date")} className="h-8" />
+              <Select
+                value={watch("status")}
+                onValueChange={(v) =>
+                  setValue("status", v as EditFormData["status"])
+                }
+              >
+                <SelectTrigger className="h-10 bg-white dark:bg-gray-800 border-kanban-border shadow-sm font-semibold">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="todo">Yapılacak</SelectItem>
+                  <SelectItem value="in_progress">Devam Ediyor</SelectItem>
+                  <SelectItem value="done">Tamamlandı</SelectItem>
+                </SelectContent>
+              </Select>
             ) : (
-              <p className="text-sm">
-                {task.due_date ? (
-                  new Date(task.due_date).toLocaleDateString("tr-TR", {
-                    day: "numeric",
-                    month: "long",
-                    year: "numeric",
-                  })
-                ) : (
-                  <span className="text-muted-foreground">Belirtilmemiş</span>
+              <div className="px-3 py-2 bg-white border rounded font-semibold text-sm text-gray-700">
+                {statusLabel[task.status]}
+              </div>
+            )}
+          </div>
+
+          {/* Atananlar */}
+          <div className="space-y-2">
+            <Label className="text-[11px] font-bold text-muted-foreground uppercase tracking-widest">
+              Atananlar
+            </Label>
+            <div className="bg-white dark:bg-gray-800 rounded-lg border border-kanban-border p-1 shadow-sm">
+              <AssigneeSection
+                taskId={task.id}
+                projectId={projectId}
+                assignees={task.assignees}
+                canEdit={canEdit()}
+              />
+            </div>
+          </div>
+
+          {/* Öncelik Seçici */}
+          <div className="space-y-2">
+            <Label className="text-[11px] font-bold text-muted-foreground uppercase tracking-widest">
+              Öncelik
+            </Label>
+            {editing ? (
+              <Select
+                value={watch("priority")}
+                onValueChange={(v) =>
+                  setValue("priority", v as EditFormData["priority"])
+                }
+              >
+                <SelectTrigger className="h-10 bg-white dark:bg-gray-800 border-kanban-border shadow-sm font-semibold">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="low">Düşük</SelectItem>
+                  <SelectItem value="medium">Orta</SelectItem>
+                  <SelectItem value="high">Yüksek</SelectItem>
+                  <SelectItem
+                    value="critical"
+                    className="text-red-600 font-bold"
+                  >
+                    Kritik
+                  </SelectItem>
+                </SelectContent>
+              </Select>
+            ) : (
+              <p
+                className={cn(
+                  "text-sm font-bold px-1",
+                  priorityColor[task.priority],
                 )}
+              >
+                {priorityLabel[task.priority]}
               </p>
             )}
           </div>
 
-          {/* Oluşturulma */}
-          <p className="text-xs text-muted-foreground">
-            Oluşturuldu: {new Date(task.created_at).toLocaleString("tr-TR")}
-          </p>
+          {/* Etiketler */}
+          <div className="space-y-2">
+            <Label className="text-[11px] font-bold text-muted-foreground uppercase tracking-widest">
+              Etiketler
+            </Label>
+            <LabelSection
+              taskId={task.id}
+              projectId={projectId}
+              labels={task.labels}
+              canEdit={canEdit()}
+            />
+          </div>
 
-          {/* Dosyalar — sadece görüntüleme modunda */}
-          {!editing && (
-            <div className="border-t pt-5 space-y-4">
-              {/* Mevcut dosyalar */}
-              <AttachmentList taskId={task.id} canEdit={canEdit()} />
-
-              {/* Yükleme alanı — sadece edit yetkisi varsa */}
-              {canEdit() && (
-                <div className="space-y-1.5">
-                  <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
-                    Dosya Yükle
-                  </p>
-                  <FileUpload taskId={task.id} />
+          {/* Tarih ve Bilgi Paneli */}
+          <div className="pt-6 border-t space-y-4">
+            <div className="flex flex-col gap-1.5">
+              <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">
+                Vade Tarihi
+              </span>
+              {editing ? (
+                <Input type="date" {...register("due_date")} className="h-9" />
+              ) : (
+                <div className="text-sm font-medium text-gray-700">
+                  {task.due_date ? (
+                    new Date(task.due_date).toLocaleDateString("tr-TR", {
+                      day: "numeric",
+                      month: "long",
+                      year: "numeric",
+                    })
+                  ) : (
+                    <span className="text-muted-foreground font-normal italic">
+                      Belirtilmemiş
+                    </span>
+                  )}
                 </div>
               )}
             </div>
-          )}
-
-          {/* Yorumlar — sadece görüntüleme modunda */}
-          {!editing && (
-            <div className="border-t pt-5">
-              <CommentSection taskId={task.id} />
+            <div className="flex flex-col gap-1.5">
+              <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">
+                Oluşturuldu
+              </span>
+              <span className="text-xs text-gray-500">
+                {new Date(task.created_at).toLocaleString("tr-TR")}
+              </span>
             </div>
-          )}
-        </div>
-
-        {/* Sağ: atananlar + etiketler */}
-        <div className="w-48 shrink-0 space-y-6 overflow-y-auto">
-          <AssigneeSection
-            taskId={task.id}
-            projectId={projectId}
-            assignees={task.assignees}
-            canEdit={canEdit()}
-          />
-          <LabelSection
-            taskId={task.id}
-            projectId={projectId}
-            labels={task.labels}
-            canEdit={canEdit()}
-          />
+          </div>
         </div>
       </div>
     </div>
   );
 }
 
-// ─── TaskDetailModal (ana bileşen) ────────────────────────────
+// ─── TaskDetailModal (Ana Wrapper) ────────────────────────────
 
 export default function TaskDetailModal() {
-  const { taskId, id: projectId } = useParams<{
-    taskId: string;
-    id: string;
-  }>();
+  const { taskId, id: projectId } = useParams<{ taskId: string; id: string }>();
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -439,30 +476,27 @@ export default function TaskDetailModal() {
     if (isModal) {
       navigate(-1);
     } else {
-      navigate(`/projects/${projectId}`);
+      navigate(`/projects/${projectId}/board`);
     }
   };
 
   if (isLoading) {
     return isModal ? (
       <ModalShell onClose={handleClose}>
-        <LoadingSpinner fullPage label="Görev yükleniyor..." />
+        <LoadingSpinner fullPage />
       </ModalShell>
     ) : (
-      <LoadingSpinner fullPage label="Görev yükleniyor..." />
+      <LoadingSpinner fullPage />
     );
   }
 
   if (isError || !task) {
-    return isModal ? (
-      <ModalShell onClose={handleClose}>
-        <p className="text-center text-muted-foreground py-8">
-          Görev bulunamadı.
-        </p>
-      </ModalShell>
-    ) : (
-      <div className="min-h-screen flex items-center justify-center text-muted-foreground">
-        Görev bulunamadı.
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-white">
+        <p className="text-muted-foreground font-medium">Görev bulunamadı.</p>
+        <Button variant="link" onClick={handleClose}>
+          Geri dön
+        </Button>
       </div>
     );
   }
@@ -480,8 +514,8 @@ export default function TaskDetailModal() {
   }
 
   return (
-    <div className="min-h-screen bg-background">
-      <div className="max-w-4xl mx-auto px-4 py-8">
+    <div className="min-h-screen bg-white">
+      <div className="max-w-6xl mx-auto h-screen shadow-2xl">
         <TaskDetailContent
           task={task}
           projectId={projectId!}
@@ -492,7 +526,7 @@ export default function TaskDetailModal() {
   );
 }
 
-// ─── Modal kabuk ──────────────────────────────────────────────
+// ─── Modal Shell ──────────────────────────────────────────────
 
 function ModalShell({
   children,
@@ -503,17 +537,12 @@ function ModalShell({
 }) {
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/20 backdrop-blur-sm"
-      onClick={(e) => {
-        if (e.target === e.currentTarget) onClose();
-      }}
+      className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-900/40 backdrop-blur-[1px]"
+      onClick={(e) => e.target === e.currentTarget && onClose()}
     >
       <div
-        className="bg-popover rounded-xl ring-1 ring-foreground/10 shadow-xl
-                   w-full max-w-3xl max-h-[90vh] mx-4 flex flex-col p-6
-                   overflow-hidden"
+        className="bg-white dark:bg-gray-950 rounded-xl shadow-[0_20px_50px_rgba(0,0,0,0.3)] w-full max-w-5xl h-[90vh] mx-4 flex flex-col overflow-hidden animate-in zoom-in-95 duration-200"
         role="dialog"
-        aria-modal="true"
       >
         {children}
       </div>
