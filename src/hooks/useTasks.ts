@@ -98,7 +98,15 @@ export function useCreateTask(projectId: string) {
 
   return useMutation({
     mutationFn: (payload: Parameters<typeof createTaskApi>[1]) =>
-      createTaskApi(projectId, payload).then((r) => r.data.data),
+      createTaskApi(projectId, payload).then((r) => {
+        const task = r.data.data;
+        // Backend'den undefined gelmesine karşı güvenli varsayılanlar
+        return {
+          ...task,
+          labels: task.labels ?? [],
+          assignees: task.assignees ?? [],
+        };
+      }),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["tasks", projectId] });
     },
@@ -117,7 +125,16 @@ export function useUpdateTask(projectId: string) {
     }: {
       taskId: string;
       payload: Parameters<typeof updateTaskApi>[1];
-    }) => updateTaskApi(taskId, payload).then((r) => r.data.data),
+    }) =>
+      updateTaskApi(taskId, payload).then((r) => {
+        const task = r.data.data;
+        // Güncelleme işleminde de güvenli varsayılanlar
+        return {
+          ...task,
+          labels: task.labels ?? [],
+          assignees: task.assignees ?? [],
+        };
+      }),
 
     onSuccess: (updatedTask) => {
       qc.setQueryData(["task", updatedTask.id], updatedTask);
@@ -252,5 +269,4 @@ export function useDeleteComment(taskId: string) {
 }
 
 // ─── Re-export type ───────────────────────────────────────────
-// Dışarıdan import kolaylığı için
 export type { Comment };

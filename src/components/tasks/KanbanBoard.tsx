@@ -73,11 +73,6 @@ function KanbanColumn({
 }
 
 // ─── Draggable Kart ───────────────────────────────────────────
-//
-// onClick ve drag handle AYRILDI:
-// - Kartın gövdesine tıklamak → onTaskClick çağrılır
-// - Yalnızca drag handle (⠿ ikonu) tutularak sürükleme başlatılır
-// Bu sayede tıklama ile sürükleme çakışmaz.
 
 function DraggableCard({
   task,
@@ -96,8 +91,6 @@ function DraggableCard({
       <TaskCard
         task={task}
         isDragging={isDragging}
-        // Drag handle prop'larını ayrı iletiyoruz — TaskCard içinde
-        // yalnızca handle elementi bu listener'ları alır.
         dragHandleProps={{ ...attributes, ...listeners }}
         onClick={onTaskClick}
       />
@@ -122,13 +115,13 @@ export default function KanbanBoard({
 
   const sensors = useSensors(
     useSensor(PointerSensor, {
-      // 5px hareket olmadan sürükleme başlamaz → kısa tıklamalar onClick'i tetikler
       activationConstraint: { distance: 5 },
     }),
   );
 
+  // tasks undefined geldiğinde çökmeyi engellemek için güvenlik eklendi
   const tasksByStatus = (status: TaskStatus) =>
-    tasks.filter((t) => t.status === status);
+    (tasks || []).filter((t) => t.status === status);
 
   const handleDragStart = (event: DragStartEvent) => {
     const task = event.active.data.current?.task as Task | undefined;
@@ -143,7 +136,9 @@ export default function KanbanBoard({
 
     const taskId = active.id as string;
     const newStatus = over.id as TaskStatus;
-    const task = tasks.find((t) => t.id === taskId);
+
+    // tasks undefined geldiğinde çökmeyi engellemek için güvenlik eklendi
+    const task = (tasks || []).find((t) => t.id === taskId);
 
     if (task && task.status !== newStatus) {
       onStatusChange(taskId, newStatus);
@@ -169,11 +164,9 @@ export default function KanbanBoard({
         ))}
       </div>
 
-      {/* Sürükleme sırasında gösterilen overlay kart */}
       <DragOverlay>
         {activeTask && (
           <div className="rotate-2 shadow-2xl opacity-95">
-            {/* Overlay'de drag handle gerekmez, onClick da çalışmaz */}
             <TaskCard task={activeTask} isDragging={false} />
           </div>
         )}

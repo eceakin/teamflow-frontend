@@ -71,13 +71,6 @@ function dueDateClass(dateStr: string | null): string {
 }
 
 // ─── TaskCard ─────────────────────────────────────────────────
-//
-// Drag ve tıklama çakışması çözümü:
-// - Kartın gövdesi tıklanabilir (onClick).
-// - Yalnızca sol üstteki ⠿ (drag handle) sürüklemeyi başlatır.
-// - dragHandleProps yalnızca handle div'ine uygulanır, kart gövdesine değil.
-// - PointerSensor'daki distance:5 kısıtlamasıyla birlikte tek tıklama
-//   kesinlikle onClick'i tetikler, sürükleme tetiklemez.
 
 interface TaskCardProps {
   task: Task;
@@ -95,6 +88,10 @@ export default function TaskCard({
 }: TaskCardProps) {
   const priority = priorityConfig[task.priority];
 
+  // DÜZELTME BURADA: Eğer undefined gelirse boş dizi kullan.
+  const labels = task.labels ?? [];
+  const assignees = task.assignees ?? [];
+
   return (
     <div
       className={cn(
@@ -104,18 +101,15 @@ export default function TaskCard({
         !isDragging && "hover:shadow-md hover:border-ring/40",
       )}
     >
-      {/* Kart iç layout: drag handle solda, içerik sağda */}
       <div className="flex items-stretch">
         {/* ── Drag handle ── */}
         {dragHandleProps && (
           <div
             {...dragHandleProps}
             className="flex items-center justify-center px-2 cursor-grab active:cursor-grabbing text-muted-foreground/40 hover:text-muted-foreground transition-colors select-none shrink-0 touch-none"
-            // Tıklamanın kart gövdesine geçmesini engelle
             onClick={(e) => e.stopPropagation()}
             aria-label="Sürükle"
           >
-            {/* Altı nokta grip ikonu */}
             <svg
               width="10"
               height="16"
@@ -158,10 +152,10 @@ export default function TaskCard({
             </p>
           </div>
 
-          {/* Etiketler */}
-          {task.labels.length > 0 && (
+          {/* Etiketler (Düzeltildi) */}
+          {labels.length > 0 && (
             <div className="flex flex-wrap gap-1">
-              {task.labels.map((label) => (
+              {labels.map((label) => (
                 <span
                   key={label.id}
                   className="inline-flex items-center gap-1 text-[10px] px-1.5 py-0.5 rounded-full font-medium"
@@ -197,18 +191,19 @@ export default function TaskCard({
                 : ""}
             </span>
 
-            {task.assignees.length > 0 && (
+            {/* Atananlar (Düzeltildi) */}
+            {assignees.length > 0 && (
               <div className="flex -space-x-1.5">
-                {task.assignees.slice(0, 3).map((a) => (
+                {assignees.slice(0, 3).map((a) => (
                   <AssigneeAvatar
                     key={a.id}
                     username={a.full_name || a.username}
                     avatarUrl={a.avatar_url}
                   />
                 ))}
-                {task.assignees.length > 3 && (
+                {assignees.length > 3 && (
                   <div className="w-6 h-6 rounded-full bg-muted flex items-center justify-center text-[10px] font-semibold text-muted-foreground ring-2 ring-background">
-                    +{task.assignees.length - 3}
+                    +{assignees.length - 3}
                   </div>
                 )}
               </div>

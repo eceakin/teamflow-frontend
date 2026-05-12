@@ -33,9 +33,11 @@ export default function AppRoutes() {
 
           <Route path="/projects/:id" element={<ProjectLayout />}>
             <Route index element={<ProjectOverviewPage />} />
+            {/* Board ve List görünümleri ile direkt görev ziyaretleri aynı arka planı kullanır */}
             <Route path="board" element={<TasksBoardPage />} />
             <Route path="tasks" element={<TasksBoardPage />} />
-            <Route path="tasks/:taskId" element={<TaskDetailModal />} />
+            <Route path="tasks/:taskId" element={<TasksBoardPage />} />
+
             <Route path="sprints" element={<SprintsPage />} />
             <Route path="members" element={<MembersPage />} />
             <Route path="labels" element={<LabelsPage />} />
@@ -53,11 +55,13 @@ export default function AppRoutes() {
         <Route path="*" element={<NotFoundPage />} />
       </Routes>
 
-      {backgroundLocation && (
-        <Routes>
-          <Route path="/projects/:id/tasks/:taskId" element={<TaskDetailModal />} />
-        </Routes>
-      )}
+      {/* Modal her zaman en üstte Route olarak tetiklenir (Background olsun ya da olmasın) */}
+      <Routes>
+        <Route
+          path="/projects/:id/tasks/:taskId"
+          element={<TaskDetailModal />}
+        />
+      </Routes>
     </>
   );
 }

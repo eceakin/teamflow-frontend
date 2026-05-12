@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useParams, useNavigate, useLocation } from "react-router-dom";
 import { useTasks, useUpdateTaskStatus } from "@/hooks/useTasks";
 import { useSprints } from "@/hooks/useSprints";
@@ -23,8 +23,34 @@ export default function TasksBoardPage() {
     assignee_id: "",
     sprint_id: "",
   });
-  const [view, setView] = useState<"board" | "list">("board");
+
   const [createOpen, setCreateOpen] = useState(false);
+
+  // 1. URL'e bakarak görünümü (view) ayarla
+  const isBoardRoute = location.pathname.includes("/board");
+  const [view, setView] = useState<"board" | "list">(
+    isBoardRoute ? "board" : "list",
+  );
+
+  // URL manuel değişirse (ileri/geri butonları) view'ı senkronize et
+  useEffect(() => {
+    if (location.pathname.includes("/board")) {
+      setView("board");
+    } else if (
+      location.pathname.includes("/tasks") &&
+      !location.pathname.includes("/tasks/")
+    ) {
+      setView("list");
+    }
+  }, [location.pathname]);
+
+  // 2. View değiştiğinde hem state'i güncelle hem de URL'i değiştir
+  const handleViewChange = (newView: "board" | "list") => {
+    setView(newView);
+    navigate(
+      `/projects/${projectId}/${newView === "board" ? "board" : "tasks"}`,
+    );
+  };
 
   const taskFilters = {
     status: filters.status || undefined,
@@ -40,7 +66,6 @@ export default function TasksBoardPage() {
     enabled: !!projectId,
   });
 
-  // Sprint listesi — FilterBar'daki sprint filtresi için
   const { data: sprints = [] } = useSprints(projectId!);
   const sprintOptions = sprints.map((s) => ({ id: s.id, name: s.name }));
 
@@ -52,6 +77,7 @@ export default function TasksBoardPage() {
 
   const handleTaskClick = (task: Task) => {
     navigate(`/projects/${projectId}/tasks/${task.id}`, {
+      // Arkadaki sayfanın durumunu koruyarak modalı açması için mevcut lokasyonu saklıyoruz
       state: { backgroundLocation: location },
     });
   };
@@ -79,9 +105,9 @@ export default function TasksBoardPage() {
         filters={filters}
         onChange={setFilters}
         members={members}
-        sprints={sprintOptions} // ← artık dolu geliyor
+        sprints={sprintOptions}
         view={view}
-        onViewChange={setView}
+        onViewChange={handleViewChange} // Artık handleViewChange fonksiyonunu çağırıyor
       />
 
       {tasks.length === 0 ? (
