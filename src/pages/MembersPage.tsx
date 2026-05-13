@@ -240,11 +240,18 @@ export default function MembersPage() {
                     <div className="relative">
                       <Input
                         {...register("user_id")}
-                        placeholder="xxxxxxxx-xxxx-xxxx..."
+                        placeholder="Profil sayfasındaki ID'yi yapıştırın..."
                         className="h-10 bg-gray-50 focus:bg-white transition-all pl-9 text-xs font-mono border-gray-200"
                       />
                       <Mail className="absolute left-3 top-3 size-4 text-gray-400" />
                     </div>
+                    <p className="text-[10px] text-muted-foreground leading-relaxed">
+                      Eklemek istediğiniz kişinin kendi{" "}
+                      <strong className="font-semibold text-gray-700">
+                        Profil Sayfasından
+                      </strong>{" "}
+                      ID'sini kopyalayıp size iletmesi gerekmektedir.
+                    </p>
                     {errors.user_id && (
                       <p className="text-[10px] font-bold text-red-500 uppercase">
                         {errors.user_id.message}

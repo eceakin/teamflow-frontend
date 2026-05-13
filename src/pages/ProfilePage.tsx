@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -10,7 +10,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
-import { BadgeCheck } from "lucide-react";
+import { BadgeCheck, Copy } from "lucide-react";
 
 const schema = z.object({
   full_name: z
@@ -32,6 +32,8 @@ export default function ProfilePage() {
   const setUser = useAuthStore((s) => s.login);
   const accessToken = useAuthStore((s) => s.accessToken);
   const refreshToken = useAuthStore((s) => s.refreshToken);
+
+  const [copied, setCopied] = useState(false);
 
   const { data: user } = useQuery({
     queryKey: ["me"],
@@ -74,6 +76,14 @@ export default function ProfilePage() {
   const displayName = user?.full_name || user?.username || "";
   const avatarPreview = watch("avatar_url");
 
+  const handleCopyId = () => {
+    if (user?.id) {
+      navigator.clipboard.writeText(user.id);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    }
+  };
+
   return (
     <div className="max-w-3xl mx-auto space-y-8 animate-in fade-in duration-500">
       {/* Başlık Bölümü */}
@@ -111,6 +121,25 @@ export default function ProfilePage() {
                 @{user?.username}
               </p>
               <p className="text-sm text-gray-500 font-medium">{user?.email}</p>
+
+              {/* Kullanıcı ID Gösterim ve Kopyalama Alanı */}
+              <div className="flex flex-col sm:flex-row items-center gap-2 mt-3 pt-2">
+                <code className="bg-white border border-gray-200 text-xs py-1.5 px-3 rounded-md font-mono text-gray-600 shadow-sm">
+                  ID: {user?.id || "Yükleniyor..."}
+                </code>
+                {user?.id && (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    type="button"
+                    onClick={handleCopyId}
+                    className="h-8 text-xs px-3 hover:bg-gray-100 transition-colors"
+                  >
+                    <Copy className="w-3.5 h-3.5 mr-1.5" />
+                    {copied ? "Kopyalandı!" : "ID'yi Kopyala"}
+                  </Button>
+                )}
+              </div>
             </div>
           </div>
         </CardHeader>
@@ -175,11 +204,18 @@ export default function ProfilePage() {
       {/* Ek Bilgi (Jira Stili) */}
       <div className="bg-blue-50/50 border border-blue-100 rounded-lg p-4 flex gap-3 items-start">
         <div className="text-blue-600 mt-0.5">ℹ️</div>
-        <p className="text-[11px] text-blue-700 leading-relaxed">
-          <b>Not:</b> Profil bilgileriniz ekip arkadaşlarınız tarafından
-          projelerde görülecektir. Profil fotoğrafı olarak geçerli bir resim
-          linki kullandığınızdan emin olun.
-        </p>
+        <div className="space-y-2">
+          <p className="text-[11px] text-blue-700 leading-relaxed">
+            <b>Not:</b> Profil bilgileriniz ekip arkadaşlarınız tarafından
+            projelerde görülecektir. Profil fotoğrafı olarak geçerli bir resim
+            linki kullandığınızdan emin olun.
+          </p>
+          <p className="text-[11px] text-blue-700 leading-relaxed">
+            <b>Projeye Davet:</b> Bir projeye katılmak için yukarıdaki{" "}
+            <strong>ID'nizi kopyalayıp</strong> sizi davet edecek proje
+            yöneticisine iletebilirsiniz.
+          </p>
+        </div>
       </div>
     </div>
   );

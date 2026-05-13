@@ -1,3 +1,9 @@
+/**
+ * TaskDetailModal — Jira Style Two-Column Layout
+ * Fonksiyonel yapıyı eksiltmeden görsel hiyerarşiyi
+ * Jira standartlarına (Sol: İçerik, Sağ: Sidebar) taşır.
+ */
+
 import { useParams, useNavigate, useLocation } from "react-router-dom";
 import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
@@ -127,6 +133,7 @@ function TaskDetailContent({
   }, [task, reset]);
 
   const startEdit = () => setEditing(true);
+
   const cancelEdit = () => {
     reset();
     setEditing(false);
@@ -155,16 +162,16 @@ function TaskDetailContent({
   return (
     <div className="flex flex-col h-full overflow-hidden bg-white dark:bg-gray-950">
       {/* ── Üst bar (Jira Stil Toolbar) ── */}
-      <div className="flex items-center justify-between px-4 py-3 border-b shrink-0">
+      <div className="flex items-center justify-between px-4 py-3 border-b shrink-0 bg-white dark:bg-gray-950">
         <div className="flex items-center gap-2 text-xs font-medium text-muted-foreground uppercase tracking-widest">
           <Eye className="size-3.5" />
           <span>TEAMFLOW-{task.id.slice(0, 5)}</span>
         </div>
         <div className="flex items-center gap-1">
-          <Button variant="ghost" size="icon-sm">
+          <Button variant="ghost" size="icon-sm" title="Paylaş">
             <Share2 className="size-4" />
           </Button>
-          <Button variant="ghost" size="icon-sm">
+          <Button variant="ghost" size="icon-sm" title="Seçenekler">
             <MoreHorizontal className="size-4" />
           </Button>
 
@@ -176,16 +183,27 @@ function TaskDetailContent({
                     size="icon-sm"
                     onClick={handleSubmit(onSubmit)}
                     disabled={isUpdating}
-                    className="bg-green-600 hover:bg-green-700"
+                    className="bg-green-600 hover:bg-green-700 h-8 w-8"
                   >
                     <Check className="size-4 text-white" />
                   </Button>
-                  <Button variant="ghost" size="icon-sm" onClick={cancelEdit}>
+                  <Button
+                    variant="ghost"
+                    size="icon-sm"
+                    onClick={cancelEdit}
+                    className="h-8 w-8"
+                  >
                     <X className="size-4" />
                   </Button>
                 </>
               ) : (
-                <Button variant="ghost" size="icon-sm" onClick={startEdit}>
+                <Button
+                  variant="ghost"
+                  size="icon-sm"
+                  onClick={startEdit}
+                  aria-label="Düzenle"
+                  className="h-8 w-8"
+                >
                   <Pencil className="size-4" />
                 </Button>
               )}
@@ -198,23 +216,26 @@ function TaskDetailContent({
                 <Button
                   variant="ghost"
                   size="icon-sm"
-                  className="text-muted-foreground hover:text-destructive"
+                  className="text-muted-foreground hover:text-destructive h-8 w-8 ml-1"
                 >
                   <Trash2 className="size-4" />
                 </Button>
               </AlertDialogTrigger>
               <AlertDialogContent>
                 <AlertDialogHeader>
-                  <AlertDialogTitle>Görevi sil?</AlertDialogTitle>
+                  <AlertDialogTitle>
+                    Görevi silmek istediğine emin misin?
+                  </AlertDialogTitle>
                   <AlertDialogDescription>
-                    Bu işlem geri alınamaz.
+                    Bu işlem geri alınamaz. Görev ve yorumları kalıcı olarak
+                    silinir.
                   </AlertDialogDescription>
                 </AlertDialogHeader>
                 <AlertDialogFooter>
                   <AlertDialogCancel>İptal</AlertDialogCancel>
                   <AlertDialogAction
                     onClick={handleDelete}
-                    className="bg-destructive hover:bg-destructive/90"
+                    className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
                     disabled={isDeleting}
                   >
                     {isDeleting ? "Siliniyor..." : "Evet, Sil"}
@@ -227,17 +248,18 @@ function TaskDetailContent({
             variant="ghost"
             size="icon-sm"
             onClick={onClose}
-            className="ml-1"
+            className="ml-1 h-8 w-8"
           >
             <X className="size-5" />
           </Button>
         </div>
       </div>
 
+      {/* ── Ana İçerik: İki Kolonlu Yapı ── */}
       <div className="flex flex-1 overflow-hidden">
-        {/* ── SOL KOLON: Ana Detaylar ── */}
+        {/* SOL KOLON: Ana Detaylar (Açıklama, Ekler, Yorumlar) */}
         <div className="flex-1 overflow-y-auto px-8 py-6 space-y-8 scrollbar-thin">
-          {/* Başlık Bölümü */}
+          {/* Başlık Bölümü (Inline-Edit Simülasyonu) */}
           <div className="space-y-1">
             {editing ? (
               <div className="space-y-2">
@@ -262,24 +284,24 @@ function TaskDetailContent({
             )}
           </div>
 
-          {/* Açıklama Bölümü */}
+          {/* Açıklama Bölümü (Inline-Edit Simülasyonu) */}
           <div className="space-y-3">
             <Label className="text-sm font-bold text-gray-700 dark:text-gray-300 uppercase tracking-tight">
               Açıklama
             </Label>
             {editing ? (
-              <div className="space-y-3">
+              <div className="space-y-3 animate-in fade-in slide-in-from-top-1">
                 <Textarea
                   {...register("description")}
                   className="text-sm min-h-[180px] focus-visible:ring-2 focus-visible:ring-blue-500 leading-relaxed"
                   placeholder="Detaylı açıklama ekleyin..."
                 />
-                <div className="flex gap-2">
+                <div className="flex gap-2 pt-1">
                   <Button
                     size="sm"
                     onClick={handleSubmit(onSubmit)}
                     disabled={isUpdating}
-                    className="bg-blue-600 hover:bg-blue-700"
+                    className="bg-blue-600 hover:bg-blue-700 shadow-sm"
                   >
                     {isUpdating ? "Kaydediliyor..." : "Kaydet"}
                   </Button>
@@ -295,7 +317,7 @@ function TaskDetailContent({
               >
                 {task.description || (
                   <span className="text-muted-foreground italic">
-                    Açıklama eklemek için tıkla...
+                    Açıklama eklemek için buraya tıkla...
                   </span>
                 )}
               </div>
@@ -303,8 +325,8 @@ function TaskDetailContent({
           </div>
 
           {/* Dosya Ekleri */}
-          <div className="space-y-4 pt-4 border-t">
-            <h3 className="text-sm font-bold text-gray-700 dark:text-gray-300">
+          <div className="space-y-4 pt-4 border-t border-gray-100 dark:border-gray-800">
+            <h3 className="text-sm font-bold text-gray-700 dark:text-gray-300 uppercase tracking-tight">
               Ekler
             </h3>
             <AttachmentList taskId={task.id} canEdit={canEdit()} />
@@ -315,8 +337,8 @@ function TaskDetailContent({
             )}
           </div>
 
-          {/* Yorumlar (Aktivite) */}
-          <div className="border-t pt-8">
+          {/* Aktivite (Yorumlar) */}
+          <div className="border-t border-gray-100 dark:border-gray-800 pt-8 pb-12">
             <h3 className="text-sm font-bold text-gray-700 dark:text-gray-300 mb-6 uppercase tracking-wider">
               Aktivite
             </h3>
@@ -325,7 +347,7 @@ function TaskDetailContent({
         </div>
 
         {/* SAĞ KOLON: Sidebar (Meta Veriler) */}
-        <div className="w-[300px] shrink-0 border-l bg-gray-50/30 dark:bg-gray-900/40 px-6 py-6 space-y-7 overflow-y-auto scrollbar-none">
+        <div className="w-[320px] shrink-0 border-l border-gray-100 dark:border-gray-800 bg-gray-50/30 dark:bg-gray-900/40 px-6 py-6 space-y-7 overflow-y-auto scrollbar-none">
           {/* Durum Seçici */}
           <div className="space-y-2">
             <Label className="text-[11px] font-bold text-muted-foreground uppercase tracking-widest">
@@ -338,7 +360,7 @@ function TaskDetailContent({
                   setValue("status", v as EditFormData["status"])
                 }
               >
-                <SelectTrigger className="h-10 bg-white dark:bg-gray-800 border-kanban-border shadow-sm font-semibold">
+                <SelectTrigger className="h-10 bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700 shadow-sm font-semibold">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -348,18 +370,18 @@ function TaskDetailContent({
                 </SelectContent>
               </Select>
             ) : (
-              <div className="px-3 py-2 bg-white border rounded font-semibold text-sm text-gray-700">
+              <div className="px-3 py-2 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded shadow-sm font-semibold text-sm text-gray-700 dark:text-gray-300 uppercase tracking-tight">
                 {statusLabel[task.status]}
               </div>
             )}
           </div>
 
-          {/* Atananlar */}
+          {/* Atananlar Kısmı */}
           <div className="space-y-2">
             <Label className="text-[11px] font-bold text-muted-foreground uppercase tracking-widest">
               Atananlar
             </Label>
-            <div className="bg-white dark:bg-gray-800 rounded-lg border border-kanban-border p-1 shadow-sm">
+            <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-1 shadow-sm">
               <AssigneeSection
                 taskId={task.id}
                 projectId={projectId}
@@ -381,7 +403,7 @@ function TaskDetailContent({
                   setValue("priority", v as EditFormData["priority"])
                 }
               >
-                <SelectTrigger className="h-10 bg-white dark:bg-gray-800 border-kanban-border shadow-sm font-semibold">
+                <SelectTrigger className="h-10 bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700 shadow-sm font-semibold">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -399,7 +421,7 @@ function TaskDetailContent({
             ) : (
               <p
                 className={cn(
-                  "text-sm font-bold px-1",
+                  "text-sm font-bold px-1 uppercase tracking-tight",
                   priorityColor[task.priority],
                 )}
               >
@@ -408,7 +430,7 @@ function TaskDetailContent({
             )}
           </div>
 
-          {/* Etiketler */}
+          {/* Etiketler Bölümü */}
           <div className="space-y-2">
             <Label className="text-[11px] font-bold text-muted-foreground uppercase tracking-widest">
               Etiketler
@@ -422,7 +444,7 @@ function TaskDetailContent({
           </div>
 
           {/* Tarih ve Bilgi Paneli */}
-          <div className="pt-6 border-t space-y-4">
+          <div className="pt-6 border-t border-gray-100 dark:border-gray-800 space-y-4">
             <div className="flex flex-col gap-1.5">
               <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">
                 Vade Tarihi
@@ -430,7 +452,7 @@ function TaskDetailContent({
               {editing ? (
                 <Input type="date" {...register("due_date")} className="h-9" />
               ) : (
-                <div className="text-sm font-medium text-gray-700">
+                <div className="text-sm font-medium text-gray-700 dark:text-gray-300">
                   {task.due_date ? (
                     new Date(task.due_date).toLocaleDateString("tr-TR", {
                       day: "numeric",
@@ -453,6 +475,10 @@ function TaskDetailContent({
                 {new Date(task.created_at).toLocaleString("tr-TR")}
               </span>
             </div>
+          </div>
+
+          <div className="pt-8 text-[10px] text-muted-foreground text-center border-t border-dashed border-gray-200 dark:border-gray-800">
+            ID: {task.id} • TeamFlow Scrum
           </div>
         </div>
       </div>
@@ -483,20 +509,33 @@ export default function TaskDetailModal() {
   if (isLoading) {
     return isModal ? (
       <ModalShell onClose={handleClose}>
-        <LoadingSpinner fullPage />
+        <div className="h-full flex items-center justify-center">
+          <LoadingSpinner label="Görev detayları yükleniyor..." />
+        </div>
       </ModalShell>
     ) : (
-      <LoadingSpinner fullPage />
+      <LoadingSpinner fullPage label="Görev detayları yükleniyor..." />
     );
   }
 
   if (isError || !task) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-white">
-        <p className="text-muted-foreground font-medium">Görev bulunamadı.</p>
-        <Button variant="link" onClick={handleClose}>
-          Geri dön
-        </Button>
+    return isModal ? (
+      <ModalShell onClose={handleClose}>
+        <div className="h-full flex flex-col items-center justify-center space-y-4">
+          <p className="text-muted-foreground font-medium">Görev bulunamadı.</p>
+          <Button variant="outline" size="sm" onClick={handleClose}>
+            Kapat
+          </Button>
+        </div>
+      </ModalShell>
+    ) : (
+      <div className="min-h-screen flex items-center justify-center text-muted-foreground bg-white dark:bg-gray-950">
+        <div className="text-center space-y-4">
+          <p className="text-lg font-medium">Görev bulunamadı.</p>
+          <Button onClick={() => navigate(`/projects/${projectId}`)}>
+            Projeye Dön
+          </Button>
+        </div>
       </div>
     );
   }
@@ -514,8 +553,8 @@ export default function TaskDetailModal() {
   }
 
   return (
-    <div className="min-h-screen bg-white">
-      <div className="max-w-6xl mx-auto h-screen shadow-2xl">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center p-4">
+      <div className="w-full max-w-6xl h-[95vh] bg-white dark:bg-gray-950 rounded-xl shadow-2xl overflow-hidden border border-gray-200 dark:border-gray-800">
         <TaskDetailContent
           task={task}
           projectId={projectId!}
@@ -526,7 +565,7 @@ export default function TaskDetailModal() {
   );
 }
 
-// ─── Modal Shell ──────────────────────────────────────────────
+// ─── Modal Shell (Zemin ve Animasyon) ─────────────────────────
 
 function ModalShell({
   children,
@@ -537,12 +576,13 @@ function ModalShell({
 }) {
   return (
     <div
-      className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-900/40 backdrop-blur-[1px]"
+      className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-900/40 backdrop-blur-[1px] animate-in fade-in duration-300"
       onClick={(e) => e.target === e.currentTarget && onClose()}
     >
       <div
-        className="bg-white dark:bg-gray-950 rounded-xl shadow-[0_20px_50px_rgba(0,0,0,0.3)] w-full max-w-5xl h-[90vh] mx-4 flex flex-col overflow-hidden animate-in zoom-in-95 duration-200"
+        className="bg-white dark:bg-gray-950 rounded-xl shadow-[0_20px_50px_rgba(0,0,0,0.3)] w-full max-w-5xl h-[92vh] mx-4 flex flex-col overflow-hidden animate-in zoom-in-95 duration-200"
         role="dialog"
+        aria-modal="true"
       >
         {children}
       </div>

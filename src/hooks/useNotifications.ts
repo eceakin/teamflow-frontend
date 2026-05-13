@@ -12,15 +12,20 @@ export function useNotifications(limit = 20) {
   return useQuery({
     queryKey: ["notifications", limit],
     queryFn: () =>
-      getNotificationsApi({ limit }).then((r: {data:{data: NotificationsResponse}}) => r.data.data),
-    refetchInterval: 30_000, // 30 saniyede bir polling
-    staleTime: 10_000,
+      getNotificationsApi({ limit }).then(
+        (r: { data: { data: NotificationsResponse } }) => r.data.data,
+      ),
+    // Bildirimlerin düşme hızını anlık hissiyat için 30 saniyeden 5 saniyeye indirdik
+    refetchInterval: 5_000,
+    refetchOnWindowFocus: true, // Sekmeye geri dönüldüğünde anında yeniler
+    staleTime: 0,
   });
 }
 
 export function useUnreadCount() {
   const { data } = useNotifications(1);
-  return data?.unread_count ?? 0;
+  // BURASI DÜZELTİLDİ: unread_count -> unreadCount
+  return (data as any)?.unreadCount ?? 0;
 }
 
 export function useMarkAsRead() {

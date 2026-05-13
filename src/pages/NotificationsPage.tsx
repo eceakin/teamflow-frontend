@@ -16,7 +16,7 @@ export default function NotificationsPage() {
   const { mutate: del } = useDeleteNotification();
 
   const notifications = data?.notifications ?? [];
-  const unreadCount = data?.unread_count ?? 0;
+  const unreadCount = data?.unreadCount ?? 0;
 
   if (isLoading) {
     return (
@@ -117,7 +117,8 @@ export default function NotificationsPage() {
                           : "text-gray-600",
                       )}
                     >
-                      {n.message}
+                      {/* n.message YERİNE n.content KULLANILDI - SORUNUN ÇÖZÜMÜ BURADA */}
+                      {n.content}
                     </p>
                     <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">
                       {new Date(n.created_at).toLocaleString("tr-TR")}

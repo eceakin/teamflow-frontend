@@ -23,7 +23,6 @@ export interface ApiResponse<T> {
   errors?: unknown[];
 }
 
-
 export interface Member {
   id: string;
   username: string;
@@ -64,9 +63,9 @@ export interface Notification {
   id: string;
   user_id: string;
   type: string;
-  message: string;
+  content: string; // 'message' yerine 'content' olarak güncellendi
   is_read: boolean;
   entity_type: string | null;
   entity_id: string | null;
-  created_at: string; 
+  created_at: string;
 }

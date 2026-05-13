@@ -19,87 +19,93 @@ export default function NotificationDropdown() {
   const navigate = useNavigate();
 
   const notifications = data?.notifications ?? [];
-  const unreadCount = data?.unread_count ?? 0;
+  // BURASI DÜZELTİLDİ: unread_count -> unreadCount
+  const unreadCount = data?.unreadCount ?? 0;
 
   return (
     <div className="relative">
-      {/* Zil ikonu */}
       <Button
         variant="ghost"
         size="icon"
-        className="relative"
+        className="relative hover:bg-gray-100 rounded-full transition-colors"
         onClick={() => setOpen((o) => !o)}
-        aria-label="Bildirimler"
       >
-        <Bell className="size-5" />
+        <Bell className="size-5 text-gray-600" />
+
+        {/* Okunmamış sayı badge'i - Otomatik artar/azalır */}
         {unreadCount > 0 && (
-          <span className="absolute -top-0.5 -right-0.5 min-w-[18px] h-[18px] rounded-full bg-destructive text-destructive-foreground text-[10px] font-bold flex items-center justify-center px-1">
-            {unreadCount > 99 ? "99+" : unreadCount}
+          <span className="absolute -top-1 -right-1 min-w-[18px] h-[18px] rounded-full bg-red-600 text-white text-[10px] font-black flex items-center justify-center border-2 border-white animate-in zoom-in shadow-sm">
+            {unreadCount > 9 ? "9+" : unreadCount}
           </span>
         )}
       </Button>
 
-      {/* Dropdown */}
       {open && (
         <>
-          {/* Dışarı tıklayınca kapat */}
-          <div
-            className="fixed inset-0 z-10"
-            onClick={() => setOpen(false)}
-          />
-          <div className="absolute right-0 top-full mt-2 w-80 z-20 rounded-xl border bg-popover shadow-lg overflow-hidden">
-            {/* Başlık */}
-            <div className="flex items-center justify-between px-4 py-3 border-b">
-              <span className="font-semibold text-sm">Bildirimler</span>
+          <div className="fixed inset-0 z-10" onClick={() => setOpen(false)} />
+          <div className="absolute right-0 top-full mt-2 w-80 z-20 rounded-xl border border-gray-200 bg-white shadow-xl overflow-hidden animate-in slide-in-from-top-2">
+            <div className="flex items-center justify-between px-4 py-3 border-b bg-gray-50/50">
+              <span className="font-bold text-xs uppercase tracking-widest text-gray-700">
+                Bildirimler
+              </span>
               {unreadCount > 0 && (
                 <button
                   onClick={() => markAll()}
-                  className="text-xs text-muted-foreground hover:text-foreground flex items-center gap-1"
+                  className="text-[10px] font-bold text-blue-600 hover:underline flex items-center gap-1"
                 >
                   <Check className="size-3" />
-                  Tümünü okundu işaretle
+                  TÜMÜNÜ OKU
                 </button>
               )}
             </div>
 
-            {/* Liste */}
             <div className="divide-y max-h-80 overflow-y-auto">
               {notifications.length === 0 ? (
-                <p className="text-sm text-muted-foreground text-center py-8">
-                  Bildirim yok
+                <p className="text-xs text-muted-foreground text-center py-10 font-medium">
+                  Yeni bildirim yok
                 </p>
               ) : (
                 notifications.map((n) => (
                   <div
                     key={n.id}
                     className={cn(
-                      "flex items-start gap-3 px-4 py-3 hover:bg-muted/50 transition-colors",
-                      !n.is_read && "bg-muted/30",
+                      "flex items-start gap-3 px-4 py-3 hover:bg-gray-50 transition-colors",
+                      !n.is_read && "bg-blue-50/30",
                     )}
                   >
                     {!n.is_read && (
-                      <span className="mt-1.5 shrink-0 w-2 h-2 rounded-full bg-primary" />
+                      <span className="mt-2 shrink-0 w-2 h-2 rounded-full bg-blue-600" />
                     )}
                     <div className="flex-1 min-w-0">
-                      <p className="text-sm leading-snug">{n.message}</p>
-                      <p className="text-xs text-muted-foreground mt-0.5">
-                        {new Date(n.created_at).toLocaleString("tr-TR")}
+                      <p
+                        className={cn(
+                          "text-xs leading-snug",
+                          !n.is_read
+                            ? "font-bold text-gray-900"
+                            : "text-gray-600",
+                        )}
+                      >
+                        {n.content}
+                      </p>
+                      <p className="text-[9px] text-gray-400 mt-1 font-bold">
+                        {new Date(n.created_at).toLocaleTimeString("tr-TR", {
+                          hour: "2-digit",
+                          minute: "2-digit",
+                        })}
                       </p>
                     </div>
                     <div className="flex gap-1 shrink-0">
                       {!n.is_read && (
                         <button
                           onClick={() => markRead(n.id)}
-                          className="text-muted-foreground hover:text-foreground"
-                          aria-label="Okundu işaretle"
+                          className="text-gray-400 hover:text-blue-600 p-1"
                         >
                           <Check className="size-3.5" />
                         </button>
                       )}
                       <button
                         onClick={() => del(n.id)}
-                        className="text-muted-foreground hover:text-destructive"
-                        aria-label="Sil"
+                        className="text-gray-400 hover:text-red-600 p-1"
                       >
                         <Trash2 className="size-3.5" />
                       </button>
@@ -109,13 +115,15 @@ export default function NotificationDropdown() {
               )}
             </div>
 
-            {/* Alt link */}
-            <div className="border-t px-4 py-2">
+            <div className="border-t p-2 bg-gray-50/50">
               <button
-                onClick={() => { navigate("/notifications"); setOpen(false); }}
-                className="text-xs text-muted-foreground hover:text-foreground w-full text-center"
+                onClick={() => {
+                  navigate("/notifications");
+                  setOpen(false);
+                }}
+                className="text-[10px] font-bold text-gray-500 hover:text-blue-600 w-full text-center uppercase tracking-widest py-1"
               >
-                Tüm bildirimleri gör
+                Tümünü Gör
               </button>
             </div>
           </div>
