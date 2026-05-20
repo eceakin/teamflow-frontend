@@ -151,6 +151,6 @@ Tests use **Vitest** for the test runner and **MSW** for API mocking. Auth store
 3. On 401 response, the response interceptor silently calls `/api/auth/refresh`, updates tokens in the store, and retries the original request.
 4. On logout or password change, the store is cleared and the user is redirected to `/login`.
 
-## License
+## License  
 
-MIT
+This project was developed as a university assignment. All rights reserved.
